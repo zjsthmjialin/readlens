@@ -1,0 +1,29 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "readlens"
+version = "0.1.0"
+description = "读透 ReadLens — 阅读智能工具箱：多平台阅读数据的导出、报告与 AI 分析（脱胎于 Tencent/WeChatReading Skills）"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { text = "Apache-2.0" }
+authors = [{ name = "ReadLens Contributors" }]
+dependencies = [
+    "requests>=2.28",
+    "pyyaml>=6.0",
+    "jinja2>=3.1",
+    "matplotlib>=3.6",
+]
+
+[project.optional-dependencies]
+ai = ["openai>=1.0"]
+dev = ["pytest>=7.0"]
+
+[project.scripts]
+readlens = "readlens.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["readlens*"]

@@ -1,0 +1,27 @@
+[
+  {
+    "title": "百年孤独",
+    "author": "加西亚·马尔克斯",
+    "category": "文学",
+    "publisher": "南海出版公司",
+    "status": "想读",
+    "owned": "physical",
+    "platform_rating": 95
+  },
+  {
+    "title": "置身事内",
+    "author": "兰小欢",
+    "category": "经济学",
+    "publisher": "上海人民出版社",
+    "status": "已读",
+    "owned": "physical",
+    "platform_rating": 91
+  },
+  {
+    "title": "地图之上",
+    "author": "未知",
+    "category": "地理",
+    "status": "想读",
+    "owned": "none"
+  }
+]

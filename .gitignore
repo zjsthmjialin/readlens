@@ -1,0 +1,17 @@
+# 密钥与本地配置（切勿提交）
+.env
+config.yaml
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+
+# 生成产物
+export_output/
+report_output/
+MyReadingVault/
+examples/output/
