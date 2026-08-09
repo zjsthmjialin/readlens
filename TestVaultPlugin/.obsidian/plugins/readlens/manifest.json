@@ -1,0 +1,10 @@
+{
+  "id": "readlens",
+  "name": "ReadLens 阅镜",
+  "version": "0.1.0",
+  "minAppVersion": "1.4.0",
+  "description": "阅镜读书知识库的原生仪表盘：评分分布 / 分类占比 / 阅读热力 / 书架，读 frontmatter 自渲染，无需 Dataview。",
+  "author": "ReadLens",
+  "authorUrl": "https://github.com/zjsthmjialin/readlens",
+  "isDesktopOnly": false
+}

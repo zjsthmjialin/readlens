@@ -387,6 +387,25 @@ def test_vault_obsidian_config(tmp_path):
     assert not os.path.exists(os.path.join(out2, ".obsidian"))
 
 
+def test_vault_dashboards_plugin(tmp_path):
+    """plugin 模式：仪表盘/首页用 ```readlens``` 原生块，整库无 dataview 残留。"""
+    import glob
+    from readlens.vault import build_vault, VaultConfig
+    plat = _plat()
+    notes = [plat.book_notes(n.book.book_id) for n in plat.notebooks()]
+    out = str(tmp_path / "v")
+    build_vault(notes, VaultConfig(out_dir=out, dashboards="plugin"))
+    home = open(os.path.join(out, "📖 首页.md"), encoding="utf-8").read()
+    assert "```readlens" in home and "view: home" in home
+    reading = open(os.path.join(out, "04-仪表盘", "在读.md"), encoding="utf-8").read()
+    assert "```readlens" in reading and "view: list" in reading
+    # 除 README 外，正文不应残留 dataview 代码块
+    for md in glob.glob(os.path.join(out, "**", "*.md"), recursive=True):
+        if os.path.basename(md) == "README.md":
+            continue
+        assert "```dataview" not in open(md, encoding="utf-8").read(), md
+
+
 def test_ai_offline():
     plat = _plat()
     engine = ai.get_engine(Config.load(None))

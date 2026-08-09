@@ -66,6 +66,7 @@ class VaultConfig:
     incremental: bool = True   # True=合并保护手写内容/手填字段；False=全量覆盖
     snapshot: bool = True      # 是否记录统计快照并生成趋势页
     obsidian_config: bool = True  # 是否预置 .obsidian 配置（启用 Dataview + 开 JS 查询）
+    dashboards: str = "dataview"  # 仪表盘渲染方式：dataview | plugin(阅镜原生插件)
 
 
 def _write_obsidian_config(root: str) -> int:
@@ -97,7 +98,50 @@ def _write_obsidian_config(root: str) -> int:
                 "refreshEnabled": True,
             }, f, ensure_ascii=False, indent=2)
         written += 1
+
+    # 轻量美化 CSS 片段（跟随主题变量，可在 外观→CSS 片段 关闭）
+    snip_dir = os.path.join(base, "snippets")
+    os.makedirs(snip_dir, exist_ok=True)
+    snip = os.path.join(snip_dir, "readlens.css")
+    if not os.path.exists(snip):
+        with open(snip, "w", encoding="utf-8") as f:
+            f.write(_READLENS_CSS)
+        written += 1
+    appearance = os.path.join(base, "appearance.json")
+    if not os.path.exists(appearance):
+        with open(appearance, "w", encoding="utf-8") as f:
+            json.dump({"enabledCssSnippets": ["readlens"]}, f,
+                      ensure_ascii=False, indent=2)
+        written += 1
     return written
+
+
+# 轻量美化：只用 Obsidian 主题变量，安全、跟随明暗主题
+_READLENS_CSS = """/* ReadLens 阅镜 · 轻量美化（外观 → CSS 片段 可关闭） */
+.markdown-rendered h1 {
+  padding-bottom: .25em;
+  border-bottom: 2px solid var(--interactive-accent);
+}
+.markdown-rendered h2 { margin-top: 1.5em; }
+.markdown-rendered table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: .94em;
+}
+.markdown-rendered thead th {
+  text-align: left;
+  color: var(--text-muted);
+  font-weight: 600;
+  border-bottom: 2px solid var(--background-modifier-border);
+  padding: 6px 10px;
+}
+.markdown-rendered tbody td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+.markdown-rendered tbody tr:hover td { background: var(--background-modifier-hover); }
+.markdown-rendered blockquote { border-left: 3px solid var(--interactive-accent); }
+"""
 
 
 def _render(fm_lines: List[str], auto_inner: str, user_tail: str) -> str:
@@ -238,8 +282,16 @@ def _book_note_parts(note: Note):
 # --------------------------------------------------------------------------
 # 作者中心页
 # --------------------------------------------------------------------------
-def _author_note_parts(author: str):
+def _author_note_parts(author: str, mode: str = "dataview"):
     fm = ["type: author", f'name: "{author}"', "tags: [author]"]
+    if mode == "plugin":
+        inner = f"""# {author}
+
+## 我库中的作品
+```readlens
+view: author
+```"""
+        return fm, inner
     inner = f"""# {author}
 
 ## 我库中的作品
@@ -255,8 +307,17 @@ SORT rating DESC
 # --------------------------------------------------------------------------
 # 主题 MOC
 # --------------------------------------------------------------------------
-def _topic_note_parts(topic: str):
+def _topic_note_parts(topic: str, mode: str = "dataview"):
     fm = ["type: topic", "tags: [topic, moc]"]
+    if mode == "plugin":
+        inner = f"""# 🗂️ {topic}
+
+按分类聚合的主题地图（MOC）。
+
+```readlens
+view: topic
+```"""
+        return fm, inner
     inner = f"""# 🗂️ {topic}
 
 按分类聚合的主题地图（MOC）。
@@ -273,7 +334,21 @@ SORT status ASC, rating DESC
 # --------------------------------------------------------------------------
 # 仪表盘
 # --------------------------------------------------------------------------
-def _dashboard_files() -> Dict[str, str]:
+def _dashboard_files_plugin() -> Dict[str, str]:
+    """插件原生渲染版仪表盘（```readlens``` 块，无需 Dataview）。"""
+    return {
+        "在读.md": "# 📕 在读\n\n```readlens\nview: list\nstatus: 在读\nsort: progress\norder: desc\ncolumns: [book, author, progress]\n```\n",
+        "已读.md": "# ✅ 已读\n\n```readlens\nview: list\nstatus: 已读\nsort: finished\norder: desc\ncolumns: [book, author, rating, finished]\n```\n",
+        "想读(愿望清单).md": "# 🌱 想读 / 愿望清单\n\n```readlens\nview: list\nstatus: 想读\nsort: added\norder: desc\ncolumns: [book, author, category, owned]\n```\n\n> 拥有情况为 `none` 的是还没入手、可以考虑购买的书。\n",
+        "购书清单.md": "# 🛒 购书清单（想读但还没入手）\n\n> 在书籍笔记里填 `priority: 高/中/低`、`price_target` 记心理价位。\n\n```readlens\nview: list\ntitle: 待购书目\nowned: none\ncolumns: [book, author, category, priority]\n```\n",
+        "评分排行.md": "# ⭐ 评分排行\n\n```readlens\nview: list\nrated: true\nsort: rating\norder: desc\ncolumns: [book, author, rating, platform]\n```\n",
+        "藏书清单.md": "# 📦 藏书清单（拥有的实体/电子书）\n\n## 纸质藏书\n```readlens\nview: list\nowned: physical\ncolumns: [book, author, location, price]\n```\n\n## 电子书\n```readlens\nview: list\nowned: digital\ncolumns: [book, author, source]\n```\n",
+    }
+
+
+def _dashboard_files(mode: str = "dataview") -> Dict[str, str]:
+    if mode == "plugin":
+        return _dashboard_files_plugin()
     return {
         "在读.md": """# 📕 在读
 ```dataview
@@ -359,7 +434,20 @@ SORT author ASC
     }
 
 
-def _stats_note_md(stat: Optional[ReadStat]) -> str:
+def _stats_note_md(stat: Optional[ReadStat], mode: str = "dataview") -> str:
+    if mode == "plugin":
+        head = "# 📊 阅读统计\n\n> 藏书概览与图表见 [[可视化统计]]。\n"
+        if stat is None:
+            return head
+        hrs = stat.total_hours
+        top = "、".join(b["title"] for b in stat.read_longest[:3])
+        cats = "、".join(c.title for c in stat.prefer_category[:3])
+        return head + (
+            f"\n## 来自阅读平台的统计（{stat.mode}）\n"
+            f"- 总阅读时长：约 **{hrs} 小时**\n"
+            f"- 阅读天数：**{stat.read_days}** 天\n"
+            f"- 读得最多：{top}\n"
+            f"- 偏好分类：{cats}\n")
     head = """# 📊 阅读统计
 
 ## 藏书概览（实时）
@@ -402,119 +490,105 @@ SORT length(rows) DESC
     return head + extra
 
 
-def _viz_note_md() -> str:
-    """DataviewJS 可视化统计页：评分分布 / 分类占比 / 按年阅读。
-
-    纯前端渲染，需启用 Dataview 的 JavaScript Queries。全程容错，
-    数据为空时给出友好提示而非报错。
-    """
+def _viz_note_md(mode: str = "dataview") -> str:
+    """可视化统计页：评分分布 / 分类占比 / 各年读完 / 阅读热力。"""
+    if mode == "plugin":
+        return "# 📈 可视化统计\n\n```readlens\nview: stats\n```\n"
     return """# 📈 可视化统计
 
-> 本页用 **DataviewJS** 渲染，需在 Dataview 设置中开启 *Enable JavaScript Queries*。
-> 图表随笔记 frontmatter（rating / category / status / finished）实时变化。
+> 本页用 **DataviewJS** 渲染，随笔记 frontmatter（rating / category / status / finished）实时变化。
 
 ```dataviewjs
 try {
   const pages = dv.pages('#book');
-  const bar = (n, max, w = 24) => {
-    const len = max > 0 ? Math.round((n / max) * w) : 0;
-    return '█'.repeat(len) + '░'.repeat(w - len);
-  };
+  const c = dv.container;
+  const H = (t) => { const h = c.createEl('h3', { text: t }); h.style.margin = '18px 0 8px'; };
+  const note = (t) => { const p = c.createEl('div', { text: t }); p.style.cssText =
+    'color:var(--text-muted);font-style:italic;margin:4px 0 14px'; };
 
-  // —— 评分分布（1–5 星）——
-  dv.header(2, '⭐ 我的评分分布');
+  function bar(label, value, max, opts) {
+    opts = opts || {};
+    const row = c.createEl('div');
+    row.style.cssText = 'display:flex;align-items:center;gap:10px;margin:5px 0';
+    const lab = row.createEl('div', { text: label });
+    lab.style.cssText = 'width:' + (opts.labelWidth || 90) +
+      'px;flex-shrink:0;color:var(--text-muted);font-size:.9em';
+    const track = row.createEl('div');
+    track.style.cssText = 'flex:1;height:16px;background:var(--background-modifier-border);' +
+      'border-radius:8px;overflow:hidden';
+    const fill = track.createEl('div');
+    const pct = max > 0 ? Math.max(3, Math.round(value / max * 100)) : 0;
+    fill.style.cssText = 'height:100%;width:' + pct + '%;border-radius:8px;background:' +
+      (opts.color || 'var(--interactive-accent)');
+    const val = row.createEl('div', { text: String(opts.valueText != null ? opts.valueText : value) });
+    val.style.cssText = 'width:64px;text-align:right;font-variant-numeric:tabular-nums;color:var(--text-normal)';
+  }
+
+  // —— 评分分布 ——
+  H('⭐ 我的评分分布');
   const rated = pages.where(p => p.rating != null && p.rating !== '');
-  if (rated.length === 0) {
-    dv.paragraph('_还没有打分的书。在书籍笔记里填 `rating: 4.5` 即可统计。_');
-  } else {
-    const buckets = {};
-    for (let s = 1; s <= 5; s++) buckets[s] = 0;
-    for (const p of rated) {
-      const s = Math.round(Number(p.rating));
-      if (s >= 1 && s <= 5) buckets[s]++;
-    }
-    const rmax = Math.max(...Object.values(buckets));
-    dv.table(['评分', '数量', ''],
-      [5, 4, 3, 2, 1].map(s =>
-        ['★'.repeat(s), buckets[s], bar(buckets[s], rmax)]));
+  if (rated.length === 0) { note('还没有打分的书。在书籍笔记里填 rating: 4.5 即可统计。'); }
+  else {
+    const b = { 1:0, 2:0, 3:0, 4:0, 5:0 };
+    for (const p of rated) { const s = Math.round(Number(p.rating)); if (s>=1&&s<=5) b[s]++; }
+    const mx = Math.max(...Object.values(b));
+    [5,4,3,2,1].forEach(s => bar('★'.repeat(s), b[s], mx, { color:'#f5a623', labelWidth:96 }));
   }
 
   // —— 分类占比 ——
-  dv.header(2, '🗂️ 分类占比');
+  H('🗂️ 分类占比');
   const byCat = {};
-  for (const p of pages) {
-    const c = (p.category && String(p.category).trim()) || '未分类';
-    byCat[c] = (byCat[c] || 0) + 1;
-  }
-  const catRows = Object.entries(byCat).sort((a, b) => b[1] - a[1]);
-  if (catRows.length === 0) {
-    dv.paragraph('_暂无书籍。_');
-  } else {
-    const total = catRows.reduce((s, [, n]) => s + n, 0);
-    const cmax = catRows[0][1];
-    dv.table(['分类', '数量', '占比', ''],
-      catRows.map(([c, n]) =>
-        [c, n, (100 * n / total).toFixed(0) + '%', bar(n, cmax)]));
+  for (const p of pages) { const k = (p.category && String(p.category).trim()) || '未分类'; byCat[k]=(byCat[k]||0)+1; }
+  const cats = Object.entries(byCat).sort((a,b)=>b[1]-a[1]);
+  if (cats.length === 0) note('暂无书籍。');
+  else {
+    const total = cats.reduce((s,[,n])=>s+n,0), mx = cats[0][1];
+    cats.forEach(([k,n]) => bar(k, n, mx, { valueText: n + '  ' + Math.round(100*n/total) + '%', labelWidth:104 }));
   }
 
-  // —— 按年阅读（已读）——
-  dv.header(2, '📅 各年读完数量');
+  // —— 各年读完 ——
+  H('📅 各年读完数量');
   const byYear = {};
-  for (const p of pages) {
-    const f = p.finished;
-    if (!f) continue;
-    const y = (f.year != null) ? f.year : String(f).slice(0, 4);
-    if (!y || String(y).length < 4) continue;
-    byYear[y] = (byYear[y] || 0) + 1;
-  }
+  for (const p of pages) { const f=p.finished; if(!f) continue;
+    const y=(f.year!=null)?f.year:String(f).slice(0,4); if(!y||String(y).length<4) continue; byYear[y]=(byYear[y]||0)+1; }
   const yrs = Object.keys(byYear).sort();
-  if (yrs.length === 0) {
-    dv.paragraph('_还没有带 `finished` 日期的已读书。_');
-  } else {
-    const ymax = Math.max(...Object.values(byYear));
-    dv.table(['年份', '读完', ''],
-      yrs.map(y => [y, byYear[y], bar(byYear[y], ymax)]));
-  }
+  if (yrs.length === 0) note('还没有带 finished 日期的已读书。');
+  else { const mx = Math.max(...Object.values(byYear)); yrs.forEach(y => bar(y, byYear[y], mx, { labelWidth:64 })); }
 
   // —— 阅读热力（年 × 月）——
-  dv.header(2, '🔥 阅读热力（按读完月份）');
-  const grid = {};   // year -> [12] 每月读完数
-  for (const p of pages) {
-    const f = p.finished;
-    if (!f) continue;
-    let y, mo;
-    if (f.year != null && f.month != null) { y = f.year; mo = f.month; }
-    else {
-      const s = String(f);
-      const mm = s.match(/^(\d{4})-(\d{2})/);
-      if (!mm) continue;
-      y = +mm[1]; mo = +mm[2];
-    }
+  H('🔥 阅读热力（按读完月份）');
+  const grid = {};
+  for (const p of pages) { const f=p.finished; if(!f) continue; let y, mo;
+    if (f.year!=null && f.month!=null) { y=f.year; mo=f.month; }
+    else { const m = String(f).match(/^(\\d{4})-(\\d{2})/); if(!m) continue; y=+m[1]; mo=+m[2]; }
     if (!grid[y]) grid[y] = new Array(12).fill(0);
-    if (mo >= 1 && mo <= 12) grid[y][mo - 1]++;
+    if (mo>=1 && mo<=12) grid[y][mo-1]++;
   }
-  const gyears = Object.keys(grid).sort();
-  if (gyears.length === 0) {
-    dv.paragraph('_暂无可用于热力图的读完日期。_');
-  } else {
-    let hmax = 1;
-    for (const y of gyears) hmax = Math.max(hmax, ...grid[y]);
-    // 用 5 档方块表示热度：无=░，其余按比例 ▁▂▃█
-    const blocks = ['·', '▂', '▄', '▆', '█'];
-    const heat = n => n === 0 ? blocks[0]
-      : blocks[Math.min(4, 1 + Math.floor((n - 1) / Math.max(1, hmax) * 3))];
-    const months = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
-    dv.table(['年', ...months, '合计'],
-      gyears.map(y => {
-        const row = grid[y];
-        const cells = row.map(n => n === 0 ? heat(0) : `${heat(n)}${n}`);
-        return [y, ...cells, row.reduce((a, b) => a + b, 0)];
-      }));
-    dv.paragraph('_方块越满代表当月读完越多；数字为当月读完本数。_');
+  const gy = Object.keys(grid).sort();
+  if (gy.length === 0) note('暂无可用于热力图的读完日期。');
+  else {
+    let mx = 1; for (const y of gy) mx = Math.max(mx, ...grid[y]);
+    const head = c.createEl('div');
+    head.style.cssText = 'display:flex;gap:4px;margin:6px 0 4px;padding-left:44px';
+    for (let m=1;m<=12;m++){ const d = head.createEl('div',{text:String(m)});
+      d.style.cssText = 'width:26px;text-align:center;font-size:.72em;color:var(--text-faint)'; }
+    for (const y of gy) {
+      const row = c.createEl('div');
+      row.style.cssText = 'display:flex;gap:4px;align-items:center;margin:2px 0';
+      const yl = row.createEl('div',{text:y});
+      yl.style.cssText = 'width:40px;font-size:.8em;color:var(--text-muted)';
+      grid[y].forEach(n => {
+        const cell = row.createEl('div',{text: n>0?String(n):''});
+        const a = n>0 ? (0.25 + 0.75*(n/mx)) : 0;
+        cell.style.cssText = 'width:26px;height:22px;border-radius:4px;display:flex;' +
+          'align-items:center;justify-content:center;font-size:.7em;color:' + (n>0?'#fff':'transparent') +
+          ';background:' + (n>0 ? 'rgba(56,158,68,'+a.toFixed(2)+')' : 'var(--background-modifier-border)');
+      });
+    }
+    note('颜色越深代表当月读完越多；数字为当月读完本数。');
   }
 } catch (e) {
-  dv.paragraph('⚠️ 渲染失败：' + e.message +
-    '（请确认已启用 Dataview 的 JavaScript Queries）');
+  dv.paragraph('⚠️ 渲染失败：' + e.message + '（请确认已启用 Dataview 的 JavaScript Queries）');
 }
 ```
 """
@@ -523,7 +597,14 @@ try {
 # --------------------------------------------------------------------------
 # 首页 & 时间线
 # --------------------------------------------------------------------------
-def _home_md(vault_name: str) -> str:
+def _home_md(vault_name: str, mode: str = "dataview") -> str:
+    if mode == "plugin":
+        return (f"# 📖 {vault_name} · 首页\n\n"
+                "```readlens\nview: home\n```\n\n"
+                "## 快捷入口\n"
+                "- [[在读]] · [[已读]] · [[想读(愿望清单)]] · [[购书清单]]\n"
+                "- [[评分排行]] · [[藏书清单]] · [[阅读统计]] · [[可视化统计]]\n"
+                "- [[05-阅读时间线|📅 阅读时间线]] · [[趋势|📈 统计趋势]]\n")
     return f"""# 📖 {vault_name} · 首页
 
 > 个人读书 / 藏书知识库。需启用 **Dataview** 插件。
@@ -567,7 +648,11 @@ GROUP BY status AS 状态
 """
 
 
-def _timeline_md() -> str:
+def _timeline_md(mode: str = "dataview") -> str:
+    if mode == "plugin":
+        return ("# 📅 阅读时间线\n\n按读完时间倒序。\n\n"
+                "```readlens\nview: list\nfinished: true\nsort: finished\norder: desc\n"
+                "columns: [book, author, rating, finished]\n```\n")
     return """# 📅 阅读时间线
 
 按读完时间倒序排列。
@@ -621,24 +706,25 @@ def build_vault(notes: List[Note], config: VaultConfig,
         if b.category:
             topics.add(b.category)
 
+    mode = config.dashboards
     # 作者中心页（增量：保护「## 关于」手写区）
     for a in sorted(authors):
-        fm, inner = _author_note_parts(a)
+        fm, inner = _author_note_parts(a, mode)
         _write_note(os.path.join(root, DIR_AUTHORS, f"{_slug(a)}.md"),
                     fm, inner, TAIL_AUTHOR, inc)
         counts["authors"] += 1
 
     # 主题 MOC（增量：保护「## 主题笔记」手写区）
     for tp in sorted(topics):
-        fm, inner = _topic_note_parts(tp)
+        fm, inner = _topic_note_parts(tp, mode)
         _write_note(os.path.join(root, DIR_TOPICS, f"{_slug(tp)}.md"),
                     fm, inner, TAIL_TOPIC, inc)
         counts["topics"] += 1
 
     # 仪表盘（纯自动，全量覆盖）
-    dash = _dashboard_files()
-    dash["阅读统计.md"] = _stats_note_md(stat)
-    dash["可视化统计.md"] = _viz_note_md()
+    dash = _dashboard_files(mode)
+    dash["阅读统计.md"] = _stats_note_md(stat, mode)
+    dash["可视化统计.md"] = _viz_note_md(mode)
     for name, content in dash.items():
         with open(os.path.join(root, DIR_DASH, name), "w", encoding="utf-8") as f:
             f.write(content)
@@ -652,9 +738,9 @@ def build_vault(notes: List[Note], config: VaultConfig,
 
     # 首页 / 时间线 / README
     with open(os.path.join(root, "📖 首页.md"), "w", encoding="utf-8") as f:
-        f.write(_home_md(config.vault_name))
+        f.write(_home_md(config.vault_name, mode))
     with open(os.path.join(root, "05-阅读时间线.md"), "w", encoding="utf-8") as f:
-        f.write(_timeline_md())
+        f.write(_timeline_md(mode))
     with open(os.path.join(root, "README.md"), "w", encoding="utf-8") as f:
         f.write(T.VAULT_README)
     counts["misc"] += 5

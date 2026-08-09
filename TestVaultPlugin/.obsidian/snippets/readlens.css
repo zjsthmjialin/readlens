@@ -1,0 +1,24 @@
+/* ReadLens 阅镜 · 轻量美化（外观 → CSS 片段 可关闭） */
+.markdown-rendered h1 {
+  padding-bottom: .25em;
+  border-bottom: 2px solid var(--interactive-accent);
+}
+.markdown-rendered h2 { margin-top: 1.5em; }
+.markdown-rendered table {
+  border-collapse: collapse;
+  width: 100%;
+  font-size: .94em;
+}
+.markdown-rendered thead th {
+  text-align: left;
+  color: var(--text-muted);
+  font-weight: 600;
+  border-bottom: 2px solid var(--background-modifier-border);
+  padding: 6px 10px;
+}
+.markdown-rendered tbody td {
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--background-modifier-border);
+}
+.markdown-rendered tbody tr:hover td { background: var(--background-modifier-hover); }
+.markdown-rendered blockquote { border-left: 3px solid var(--interactive-accent); }

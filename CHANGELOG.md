@@ -2,6 +2,23 @@
 
 本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [0.7.0] - 2026-08-10
+### 新增（阅镜原生 Obsidian 插件 · 甩掉 Dataview）
+- **ReadLens 阅镜插件**（`plugin/`，TypeScript）：读 `#book` 笔记 frontmatter **原生渲染**
+  仪表盘——KPI 卡片、评分分布、分类圆环、阅读热力、书单表格、首页概览、作者/主题视图，
+  **完全不依赖 Dataview**。Apple 风设计（毛玻璃卡片、系统色、数字/条形/描边动画、Hero 大标题）。
+  代码块用法：` ```readlens\nview: home|stats|list|author|topic\n``` `。
+- **`readlens vault --dashboards plugin`**：生成的整库改用 ```readlens``` 原生块，**零 Dataview 残留**
+  （首页/在读/已读/想读/购书清单/藏书清单/评分排行/可视化/时间线/作者/主题全覆盖）。
+- 插件采集自动排除 `00-模板/` 与 `{{占位符}}` 模板文件。
+
+## [0.6.1] - 2026-08-09
+### 改进（可视化美化）
+- 可视化统计页从「字符方块条」改为**真正的彩色 HTML 条形图**（评分/分类/各年）与
+  **类 GitHub 的热力方格**（年×月），全部跟随 Obsidian 主题的 CSS 变量、明暗自适应。
+- 生成库预置一份**轻量美化 CSS 片段**（`.obsidian/snippets/readlens.css`）并默认启用：
+  标题强调线、表格斑马/悬停、引用块配色。只用主题变量、安全，可在「外观→CSS 片段」关闭。
+
 ## [0.6.0] - 2026-08-09
 ### 新增（降门槛 · 开箱即用第一层）
 - 生成知识库时**预置 `.obsidian` 配置**：列入 Dataview（安装后自动启用）、**预开启 DataviewJS**，

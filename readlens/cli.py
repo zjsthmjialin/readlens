@@ -140,7 +140,8 @@ def cmd_vault(args):
     vc = VaultConfig(out_dir=args.out, vault_name=args.name,
                      incremental=not args.overwrite,
                      snapshot=not args.no_snapshot,
-                     obsidian_config=not args.no_obsidian_config)
+                     obsidian_config=not args.no_obsidian_config,
+                     dashboards=args.dashboards)
     counts = build_vault(notes, vc, stat=stat, manual_books=manual)
     mode = "全量覆盖" if args.overwrite else "增量合并（保护手写内容/手填字段）"
     print(f"更新模式：{mode}")
@@ -165,7 +166,8 @@ def cmd_quickstart(args):
         stat = plat.read_stat(mode="overall")
     except Exception:
         stat = None
-    vc = VaultConfig(out_dir=args.out, vault_name=args.name, incremental=True)
+    vc = VaultConfig(out_dir=args.out, vault_name=args.name, incremental=True,
+                     dashboards=getattr(args, "dashboards", "dataview"))
     counts = build_vault(notes, vc, stat=stat, manual_books=manual)
     print("🎉 ReadLens 已用内置离线示例数据生成一个演示知识库！")
     print(f"   位置：{args.out}")
@@ -225,7 +227,8 @@ def cmd_sync(args):
 
     vc = VaultConfig(out_dir=args.out, vault_name=args.name,
                      incremental=not args.overwrite,
-                     obsidian_config=not getattr(args, "no_obsidian_config", False))
+                     obsidian_config=not getattr(args, "no_obsidian_config", False),
+                     dashboards=getattr(args, "dashboards", "dataview"))
     counts = build_vault(notes, vc, stat=overall, manual_books=manual)
     print(f"  知识库已更新：书籍 {counts['books']} · 作者 {counts['authors']} · "
           f"主题 {counts['topics']} · 仪表盘 {counts['dashboards']}")
@@ -334,6 +337,8 @@ def build_parser():
     s.add_argument("--name", default="阅镜演示书库", help="知识库名称")
     s.add_argument("--with-manual", action="store_true",
                    help="同时纳入一组内置示例藏书，演示手动藏书入库")
+    s.add_argument("--dashboards", default="dataview", choices=["dataview", "plugin"],
+                   help="仪表盘渲染：dataview | plugin(阅镜原生插件，无需 Dataview)")
     s.set_defaults(func=cmd_quickstart)
 
     s = sub.add_parser("search", help="搜索书籍")
@@ -374,6 +379,8 @@ def build_parser():
                    help="不记录统计快照/趋势页")
     s.add_argument("--no-obsidian-config", action="store_true",
                    help="不预置 .obsidian 配置（默认预置：启用 Dataview + 开 JS 查询）")
+    s.add_argument("--dashboards", default="dataview", choices=["dataview", "plugin"],
+                   help="仪表盘渲染：dataview | plugin(阅镜原生插件，无需 Dataview)")
     s.add_argument("--enrich", action="store_true",
                    help="生成前用元数据源补全缺失的 isbn/cover/publisher/pubdate")
     s.add_argument("--enrich-source", default="mock", choices=["mock", "douban"],
@@ -392,6 +399,8 @@ def build_parser():
     s.add_argument("--overwrite", action="store_true", help="全量覆盖（默认增量合并）")
     s.add_argument("--no-obsidian-config", action="store_true",
                    help="不预置 .obsidian 配置")
+    s.add_argument("--dashboards", default="dataview", choices=["dataview", "plugin"],
+                   help="仪表盘渲染：dataview | plugin(阅镜原生插件)")
     s.add_argument("--enrich", action="store_true", help="顺带元数据增强")
     s.add_argument("--enrich-source", default="mock", choices=["mock", "douban"])
     s.set_defaults(func=cmd_sync)

@@ -120,6 +120,16 @@ readlens enrich                           # 预览元数据增强（补 ISBN/封
 readlens vault --enrich --out ./MyVault   # 生成知识库时顺带补全元数据
 ```
 
+## 原生 Obsidian 插件（可选，甩掉 Dataview）
+
+阅镜自带一个 Obsidian 插件（`plugin/`），**原生渲染**读书仪表盘——KPI 卡片、评分分布、
+分类圆环、阅读热力、书单表格、首页概览、作者/主题视图，**完全不依赖 Dataview**，Apple 风设计。
+
+```bash
+readlens vault --dashboards plugin --out ./MyVault
+```
+这样生成的整库仪表盘都用插件的 ```readlens``` 块渲染，零 Dataview。插件安装见 [`plugin/README.md`](plugin/README.md)。
+
 ## 定时自动化（让知识库自动生长）
 
 一条命令跑完整个流程——拉数据 → 增量更新知识库 → 生成周/月/年报 → 落统计快照：
