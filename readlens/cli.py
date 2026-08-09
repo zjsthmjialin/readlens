@@ -19,7 +19,7 @@ import sys
 from .config import Config
 from .adapters import get_platform
 from . import export as exp
-from .report import render_html_report
+from .report import render_html_report, render_digest_md, period_slug
 from . import ai
 from .models import Book, Note
 from .vault import build_vault, VaultConfig
@@ -181,6 +181,57 @@ def cmd_quickstart(args):
     print("  更多命令见 readlens -h")
 
 
+def cmd_sync(args):
+    """定时自动化入口：拉数据 → 增量更新知识库 → 生成周/月报，一条命令跑完。"""
+    import os
+    from datetime import datetime
+    cfg, plat = _load(args)
+    t0 = datetime.now()
+    print(f"[{t0:%Y-%m-%d %H:%M}] ReadLens sync 开始（平台：{cfg['platform']}）")
+
+    notes = [plat.book_notes(n.book.book_id) for n in plat.notebooks()]
+    manual = _load_manual_books(args.manual)
+    if args.enrich:
+        from . import enrich
+        fetcher = enrich.get_fetcher(args.enrich_source,
+                                     cache_path=".readlens_cache/douban.json")
+        enrich.enrich_notes(notes + manual, fetcher)
+
+    overall = None
+    try:
+        overall = plat.read_stat(mode="overall")
+    except Exception as e:
+        print(f"  ⚠️ 读取总体统计失败（跳过快照）：{e}")
+
+    vc = VaultConfig(out_dir=args.out, vault_name=args.name,
+                     incremental=not args.overwrite)
+    counts = build_vault(notes, vc, stat=overall, manual_books=manual)
+    print(f"  知识库已更新：书籍 {counts['books']} · 作者 {counts['authors']} · "
+          f"主题 {counts['topics']} · 仪表盘 {counts['dashboards']}")
+
+    # 周期报告写进知识库
+    if args.report_mode != "none":
+        try:
+            rstat = plat.read_stat(mode=args.report_mode)
+            ai_summary = None
+            try:
+                ai_summary = ai.summarize_reading(rstat, ai.get_engine(cfg))
+            except Exception:
+                pass
+            md = render_digest_md(rstat, args.report_mode, ai_summary=ai_summary)
+            rdir = os.path.join(args.out, "07-报告")
+            os.makedirs(rdir, exist_ok=True)
+            fname = period_slug(args.report_mode) + ".md"
+            with open(os.path.join(rdir, fname), "w", encoding="utf-8") as f:
+                f.write(md)
+            print(f"  已生成{args.report_mode}报告：07-报告/{fname}")
+        except Exception as e:
+            print(f"  ⚠️ 生成周期报告失败：{e}")
+
+    dt = (datetime.now() - t0).total_seconds()
+    print(f"[{datetime.now():%Y-%m-%d %H:%M}] sync 完成，用时 {dt:.0f}s → {args.out}")
+
+
 def cmd_weread_check(args):
     """诊断：验证微信读书网关鉴权是否通（调用只需鉴权的 /_list）。"""
     cfg = Config.load(args.config)
@@ -297,6 +348,18 @@ def build_parser():
     s.add_argument("--enrich-source", default="mock", choices=["mock", "douban"],
                    help="元数据来源：mock(离线) | douban(在线, best-effort)")
     s.set_defaults(func=cmd_vault)
+
+    s = sub.add_parser("sync", help="定时自动化：拉数据→增量更新知识库→生成周/月报（一条命令）")
+    s.add_argument("--out", default="./MyReadingVault", help="知识库输出目录")
+    s.add_argument("--name", default="我的读书藏书库", help="知识库名称")
+    s.add_argument("--manual", help="手动藏书 JSON 文件路径")
+    s.add_argument("--report-mode", default="weekly",
+                   choices=["weekly", "monthly", "annually", "none"],
+                   help="生成的周期报告类型（none=不生成）")
+    s.add_argument("--overwrite", action="store_true", help="全量覆盖（默认增量合并）")
+    s.add_argument("--enrich", action="store_true", help="顺带元数据增强")
+    s.add_argument("--enrich-source", default="mock", choices=["mock", "douban"])
+    s.set_defaults(func=cmd_sync)
 
     s = sub.add_parser("weread-check", help="诊断微信读书网关鉴权是否通")
     s.set_defaults(func=cmd_weread_check)

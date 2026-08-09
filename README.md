@@ -120,6 +120,19 @@ readlens enrich                           # 预览元数据增强（补 ISBN/封
 readlens vault --enrich --out ./MyVault   # 生成知识库时顺带补全元数据
 ```
 
+## 定时自动化（让知识库自动生长）
+
+一条命令跑完整个流程——拉数据 → 增量更新知识库 → 生成周/月报 → 落统计快照：
+
+```bash
+export WEREAD_API_KEY=wrk-你的key
+readlens sync --platform weread --out ./MyVault --report-mode weekly
+```
+
+再用 macOS launchd 或 cron 定时跑它，知识库就会每周/每月自动更新、自动出周报月报。
+配置见 [`docs/AUTOMATION.md`](docs/AUTOMATION.md)。周期报告写入知识库的 `07-报告/`，
+`06-统计快照/趋势.md` 自动累积对比。
+
 ## 接入真实数据
 
 1. 复制配置：`cp config.example.yaml config.yaml`，把 `platform` 改为 `weread`
@@ -197,6 +210,3 @@ Apache-2.0 — 参考并延展自 Tencent/WeChatReading（Apache-2.0）。
 
 
 
-cd "/Users/jinsongmini/Projects/ReadLens  260808"
-export WEREAD_API_KEY=wrk-aQQYGkApSUazQUw6gtlJeQAA
-python3 -m readlens.cli weread-check

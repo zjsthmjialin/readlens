@@ -88,11 +88,12 @@
 
 ## D. Phase 3 · 分发与自动化（进阶）
 
-### D1 · 定时任务：周期导入 + 周报/月报 ⬜ P2
+### D1 · 定时任务：周期导入 + 周报/月报 ✅ P2
 - **目的**：把知识库变「活」——自动更新并推送阶段报告。
-- **交付**：调度脚本（cron / GitHub Actions 定时 / Cowork 定时任务），周期性增量更新 vault + 生成周/月报。
-- **验收**：按设定周期自动产出更新与报告。
-- **前置**：C2（真实 Key）+ 一个运行环境。
+- **交付**：✅ `readlens sync` 一条命令（拉数据→增量更新 vault→周/月报写入 `07-报告/`→落快照）；
+  ✅ `docs/AUTOMATION.md` 提供 macOS launchd + Linux cron 定时方案；✅ digest/sync 测试。
+- **验收**：✅ 单命令跑通、幂等；本机定时器按周期自动产出更新与报告。
+- **前置**：C2（真实 Key，已完成）+ 本机运行环境。
 
 ### D2 · Skill 包（npx skills add 形态）⬜ P3
 - **目的**：回归「脱胎于 WeChatReading Skills」，对 Agent 生态分发。

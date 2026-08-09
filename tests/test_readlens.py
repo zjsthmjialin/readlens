@@ -322,6 +322,34 @@ def test_weread_mapping_offline(monkeypatch):
     assert stat.prefer_category[0].title == "科幻"
 
 
+def test_digest_and_slug():
+    """周期报告摘要渲染 + 幂等命名。"""
+    from datetime import date
+    from readlens.report import render_digest_md, period_slug
+    stat = _plat().read_stat("weekly")
+    md = render_digest_md(stat, "weekly", ai_summary="这是小结")
+    assert "阅读周报" in md and "阅读时长" in md and "这是小结" in md
+    assert period_slug("monthly", date(2026, 8, 9)) == "月报-2026-08"
+    assert period_slug("weekly", date(2026, 8, 9)).startswith("周报-2026-W")
+
+
+def test_sync_command(tmp_path):
+    """sync 一条命令：生成知识库 + 周期报告写入 07-报告。"""
+    import argparse
+    from readlens.cli import cmd_sync
+    out = str(tmp_path / "v")
+    args = argparse.Namespace(config=None, platform="mock", out=out,
+                              name="测试库", manual=None, report_mode="weekly",
+                              overwrite=False, enrich=False, enrich_source="mock")
+    cmd_sync(args)
+    assert os.path.exists(os.path.join(out, "📖 首页.md"))
+    reports = os.listdir(os.path.join(out, "07-报告"))
+    assert any(r.startswith("周报-") for r in reports)
+    # 幂等：再跑一次不新增重复文件
+    cmd_sync(args)
+    assert len(os.listdir(os.path.join(out, "07-报告"))) == len(reports)
+
+
 def test_ai_offline():
     plat = _plat()
     engine = ai.get_engine(Config.load(None))
