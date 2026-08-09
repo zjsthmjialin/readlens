@@ -4,7 +4,7 @@
 > 新会话请先读本文件，再读 `docs/HANDOFF.md`（当前状态）与 `docs/PROJECT_PLAN.md`（规划）。
 
 ## 项目一句话
-ReadLens（读透）是一个「阅读智能工具箱」，脱胎于 Tencent/WeChatReading Skills，
+ReadLens（阅镜）是一个「阅读智能工具箱」，脱胎于 Tencent/WeChatReading Skills，
 把个人读书数据（微信读书导入 + 手动藏书）沉淀为可导出、可分析、可生长的知识库；
 核心交付形态是一个深度适配 Dataview 的 **Obsidian 读书/藏书知识库**。
 

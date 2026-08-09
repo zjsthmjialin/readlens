@@ -1,0 +1,39 @@
+# 更新日志 Changelog
+
+本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
+
+## [0.3.1] - 2026-08-09
+### 变更
+- 确定中文名为 **阅镜**（ReadLens：阅=read，镜=lens），替换旧中文名「读透」。
+### 文档
+- README「效果预览」改用真实资产：知识库首页结构示意 SVG + `readlens report` 真实图表。
+- 新增 `CHANGELOG.md`、`CONTRIBUTING.md`，提升开源可用性。
+
+## [0.3.0] - 2026-08-09
+### 新增
+- **阅读热力日历**：可视化统计页新增按 `finished` 月份的「年×月」热力网格（DataviewJS）。
+- **统计快照与趋势**：每次生成 vault 落一份带日期快照到 `06-统计快照/history.json`
+  （按日期 upsert 累积），并生成 `趋势.md` 展示历次「与上期对比(±)」；`vault --no-snapshot` 可关。
+- **示例藏书随包**：内置 `readlens/sampledata.py`；`readlens quickstart --with-manual`
+  无需外部文件即可演示手动藏书入库与购书清单。
+### 变更
+- `Book` 模型新增 `isbn` / `pubdate` 字段。
+
+## [0.2.0] - 2026-08-09
+### 新增
+- **vault 增量更新**：自动区用标记注释包裹，重复生成只刷新自动区；frontmatter 保护
+  手填字段（rating/location/price/isbn/cover/owned/priority…）。`vault --overwrite` 可全量。
+- **书籍笔记内嵌封面图**（`cover` → `![封面|150](URL)`）。
+- **DataviewJS 可视化统计页**：评分分布 / 分类占比 / 各年读完。
+- **购书清单**：聚合 `owned: none`，按 `priority` 排序、`price_target` 记心理价位。
+- **豆瓣元数据增强**：可插拔 `readlens/enrich/`（mock 离线 + douban 在线降级），
+  `readlens enrich` 预览、`readlens vault --enrich` 落库；只填空不覆盖。
+- **一键上手**：`readlens quickstart` 用内置离线数据生成演示知识库，无需 Key。
+- **分发**：`pyproject.toml` 打包、`readlens` 入口点、`--version`；GitHub Actions CI +
+  Trusted Publishing 自动发布；发布到 PyPI。
+
+## [0.1.0]
+### 新增
+- 五大能力：平台适配层 / 多格式导出（Markdown·Obsidian·Notion）/ 读书报告（HTML+图表）/
+  AI 增值（总结·主题·问答·推荐，离线可跑）/ Obsidian 知识库生成。
+- CLI：search / shelf / notes / export / report / ai / vault。离线 mock 平台 + 离线 AI 引擎。

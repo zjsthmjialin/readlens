@@ -1,0 +1,107 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="920" height="560" viewBox="0 0 920 560" font-family="-apple-system,Segoe UI,Roboto,Helvetica,Arial,PingFang SC,Microsoft YaHei,sans-serif">
+  <!-- 说明：这是 ReadLens 生成的 Obsidian 知识库「首页」的结构示意图（非真实截图）。 -->
+  <rect width="920" height="560" fill="#1e1e1e"/>
+  <!-- 左侧文件树 -->
+  <rect x="0" y="0" width="220" height="560" fill="#252526"/>
+  <text x="18" y="34" fill="#cfcfcf" font-size="13" font-weight="700">我的读书藏书库</text>
+  <g fill="#9aa0a6" font-size="12.5">
+    <text x="18" y="66">📖 首页</text>
+    <text x="30" y="92">01-书籍</text>
+    <text x="30" y="116">02-作者</text>
+    <text x="30" y="140">03-主题</text>
+    <text x="30" y="164">04-仪表盘</text>
+    <text x="46" y="188" fill="#7d8590">在读 · 已读 · 想读</text>
+    <text x="46" y="210" fill="#7d8590">购书清单 · 评分排行</text>
+    <text x="46" y="232" fill="#7d8590">可视化统计 · 阅读统计</text>
+    <text x="30" y="258">05-阅读时间线</text>
+    <text x="30" y="282">06-统计快照</text>
+    <text x="30" y="306">00-模板</text>
+  </g>
+  <!-- 主区标题 -->
+  <text x="250" y="44" fill="#e8e8e8" font-size="22" font-weight="700">📖 我的读书藏书库 · 首页</text>
+  <text x="250" y="70" fill="#8a8f98" font-size="12.5">个人读书 / 藏书知识库 · 由 Dataview 实时驱动</text>
+
+  <!-- 正在读 卡片 -->
+  <rect x="250" y="92" width="410" height="150" rx="8" fill="#2a2d2e" stroke="#3a3d41"/>
+  <text x="268" y="116" fill="#f0b429" font-size="14" font-weight="700">📕 正在读</text>
+  <line x1="268" y1="128" x2="642" y2="128" stroke="#3a3d41"/>
+  <g font-size="12.5">
+    <text x="268" y="150" fill="#d6d6d6">《置身事内》</text><text x="470" y="150" fill="#9aa0a6">兰小欢</text><text x="600" y="150" fill="#6bbf59">62%</text>
+    <text x="268" y="176" fill="#d6d6d6">《人类简史》</text><text x="470" y="176" fill="#9aa0a6">赫拉利</text><text x="600" y="176" fill="#6bbf59">45%</text>
+    <text x="268" y="202" fill="#d6d6d6">《沙丘》</text><text x="470" y="202" fill="#9aa0a6">赫伯特</text><text x="600" y="202" fill="#6bbf59">18%</text>
+  </g>
+
+  <!-- 藏书速览 卡片 -->
+  <rect x="676" y="92" width="228" height="150" rx="8" fill="#2a2d2e" stroke="#3a3d41"/>
+  <text x="694" y="116" fill="#4aa3df" font-size="14" font-weight="700">📊 藏书速览</text>
+  <line x1="694" y1="128" x2="886" y2="128" stroke="#3a3d41"/>
+  <g font-size="12.5">
+    <text x="694" y="150" fill="#9aa0a6">已读</text><text x="860" y="150" fill="#d6d6d6" text-anchor="end">4</text>
+    <text x="694" y="176" fill="#9aa0a6">在读</text><text x="860" y="176" fill="#d6d6d6" text-anchor="end">1</text>
+    <text x="694" y="202" fill="#9aa0a6">想读</text><text x="860" y="202" fill="#d6d6d6" text-anchor="end">3</text>
+    <text x="694" y="228" fill="#9aa0a6">待购(none)</text><text x="860" y="228" fill="#d6d6d6" text-anchor="end">2</text>
+  </g>
+
+  <!-- 最近读完 -->
+  <rect x="250" y="258" width="410" height="164" rx="8" fill="#2a2d2e" stroke="#3a3d41"/>
+  <text x="268" y="282" fill="#6bbf59" font-size="14" font-weight="700">✅ 最近读完</text>
+  <line x1="268" y1="294" x2="642" y2="294" stroke="#3a3d41"/>
+  <g font-size="12.5">
+    <text x="268" y="316" fill="#d6d6d6">《三体》</text><text x="470" y="316" fill="#9aa0a6">刘慈欣</text><text x="600" y="316" fill="#f0b429">★★★★★</text>
+    <text x="268" y="342" fill="#d6d6d6">《置身事内》</text><text x="470" y="342" fill="#9aa0a6">兰小欢</text><text x="600" y="342" fill="#f0b429">★★★★</text>
+    <text x="268" y="368" fill="#d6d6d6">《娱乐至死》</text><text x="470" y="368" fill="#9aa0a6">波兹曼</text><text x="600" y="368" fill="#f0b429">★★★★</text>
+    <text x="268" y="394" fill="#d6d6d6">《置身事内》</text><text x="470" y="394" fill="#9aa0a6">兰小欢</text><text x="600" y="394" fill="#f0b429">★★★★</text>
+  </g>
+
+  <!-- 可视化：分类占比 mini -->
+  <rect x="676" y="258" width="228" height="164" rx="8" fill="#2a2d2e" stroke="#3a3d41"/>
+  <text x="694" y="282" fill="#c678dd" font-size="14" font-weight="700">🗂️ 分类占比</text>
+  <line x1="694" y1="294" x2="886" y2="294" stroke="#3a3d41"/>
+  <g font-size="11.5" fill="#9aa0a6">
+    <text x="694" y="314">科幻</text>
+    <rect x="742" y="305" width="120" height="10" rx="2" fill="#4aa3df"/>
+    <text x="694" y="338">经济学</text>
+    <rect x="742" y="329" width="84" height="10" rx="2" fill="#6bbf59"/>
+    <text x="694" y="362">社会学</text>
+    <rect x="742" y="353" width="60" height="10" rx="2" fill="#f0b429"/>
+    <text x="694" y="386">文学</text>
+    <rect x="742" y="377" width="44" height="10" rx="2" fill="#c678dd"/>
+    <text x="694" y="410">历史</text>
+    <rect x="742" y="401" width="30" height="10" rx="2" fill="#e06c75"/>
+  </g>
+
+  <!-- 阅读热力条 -->
+  <rect x="250" y="438" width="654" height="100" rx="8" fill="#2a2d2e" stroke="#3a3d41"/>
+  <text x="268" y="462" fill="#e06c75" font-size="14" font-weight="700">🔥 阅读热力（按读完月份）</text>
+  <g>
+    <!-- 12 个月热力方块 -->
+    <g transform="translate(268,478)">
+      <!-- 行标 -->
+      <text x="-2" y="30" fill="#7d8590" font-size="11">2026</text>
+      <g>
+        <!-- generate 12 cells -->
+        <rect x="46" y="18" width="40" height="24" rx="3" fill="#2f3b2c"/>
+        <rect x="90" y="18" width="40" height="24" rx="3" fill="#3b5a2f"/>
+        <rect x="134" y="18" width="40" height="24" rx="3" fill="#4e7d34"/>
+        <rect x="178" y="18" width="40" height="24" rx="3" fill="#6bbf59"/>
+        <rect x="222" y="18" width="40" height="24" rx="3" fill="#3b5a2f"/>
+        <rect x="266" y="18" width="40" height="24" rx="3" fill="#2f3b2c"/>
+        <rect x="310" y="18" width="40" height="24" rx="3" fill="#4e7d34"/>
+        <rect x="354" y="18" width="40" height="24" rx="3" fill="#6bbf59"/>
+        <rect x="398" y="18" width="40" height="24" rx="3" fill="#2f3b2c"/>
+        <rect x="442" y="18" width="40" height="24" rx="3" fill="#3b5a2f"/>
+        <rect x="486" y="18" width="40" height="24" rx="3" fill="#2a2d2e" stroke="#3a3d41"/>
+        <rect x="530" y="18" width="40" height="24" rx="3" fill="#2a2d2e" stroke="#3a3d41"/>
+      </g>
+      <g fill="#6b7178" font-size="9" text-anchor="middle">
+        <text x="66" y="56">1</text><text x="110" y="56">2</text><text x="154" y="56">3</text>
+        <text x="198" y="56">4</text><text x="242" y="56">5</text><text x="286" y="56">6</text>
+        <text x="330" y="56">7</text><text x="374" y="56">8</text><text x="418" y="56">9</text>
+        <text x="462" y="56">10</text><text x="506" y="56">11</text><text x="550" y="56">12</text>
+      </g>
+    </g>
+  </g>
+
+  <!-- 底注 -->
+  <text x="250" y="552" fill="#5c6067" font-size="10.5">结构示意图（非真实截图）· 实际由 Obsidian + Dataview 渲染，数据随 frontmatter 实时更新</text>
+</svg>

@@ -1,4 +1,4 @@
-# 读透 ReadLens · 阅读智能工具箱
+# 阅镜 ReadLens · 阅读智能工具箱
 
 <!-- CI 徽章在把仓库推到 GitHub 后生效；PyPI 徽章在发布到 PyPI 后生效 -->
 [![CI](https://github.com/zjsthmjialin/readlens/actions/workflows/ci.yml/badge.svg)](https://github.com/zjsthmjialin/readlens/actions/workflows/ci.yml)
@@ -23,13 +23,19 @@ readlens quickstart --with-manual  # 用内置离线数据一键生成演示知�
 
 ## 效果预览
 
-`readlens quickstart` 生成的知识库在 Obsidian 中的样子（首页仪表盘 / 书籍笔记 / 可视化统计）：
+`readlens quickstart` 生成的知识库「📖 首页」在 Obsidian 中的样子（结构示意）：
 
-<!-- 截图占位：把实际截图放到 docs/images/ 后替换下面链接即可 -->
-![ReadLens 知识库首页](docs/images/vault-home.png)
+![ReadLens 知识库首页](docs/images/vault-home.svg)
 
-> 想直接看产物：仓库里的 [`examples/output/`](examples/output/) 已包含一份完整生成的
-> `MyReadingVault/`（可用 Obsidian 打开）与一份 HTML 读书报告 + 图表。
+读书报告自动生成的图表（真实产物，`readlens report` 输出）：
+
+<p align="center">
+  <img src="https://raw.githubusercontent.com/zjsthmjialin/readlens/main/docs/images/report-category.png" width="320" alt="分类占比图">
+  <img src="https://raw.githubusercontent.com/zjsthmjialin/readlens/main/docs/images/report-daily-trend.png" width="440" alt="每日阅读趋势图">
+</p>
+
+> 想在本地跑出同款：`readlens quickstart --with-manual` 生成知识库，用 Obsidian 打开、
+> 启用 Dataview 即可；`readlens report` 生成 HTML 报告与图表。
 
 ## 五大能力
 
@@ -172,8 +178,10 @@ tests/               单元测试
 
 ## 路线图与发布
 
+- 更新日志：[`CHANGELOG.md`](CHANGELOG.md)
 - 完整功能清单：[`docs/FEATURES.md`](docs/FEATURES.md)
 - 发布到 PyPI 的操作手册：[`docs/RELEASE.md`](docs/RELEASE.md)
+- 参与贡献：[`CONTRIBUTING.md`](CONTRIBUTING.md)
 
 ## 许可证
 

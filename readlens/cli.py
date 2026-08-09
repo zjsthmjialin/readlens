@@ -228,7 +228,7 @@ def build_parser():
 
     s = sub.add_parser("quickstart", help="一键用内置离线数据生成演示知识库（无需 Key）")
     s.add_argument("--out", default="./ReadLensDemo", help="演示知识库输出目录")
-    s.add_argument("--name", default="ReadLens 演示书库", help="知识库名称")
+    s.add_argument("--name", default="阅镜演示书库", help="知识库名称")
     s.add_argument("--with-manual", action="store_true",
                    help="同时纳入一组内置示例藏书，演示手动藏书入库")
     s.set_defaults(func=cmd_quickstart)
