@@ -181,6 +181,25 @@ def cmd_quickstart(args):
     print("  更多命令见 readlens -h")
 
 
+def _resolve_report_modes(value):
+    """把 --report-mode 的取值（字符串或列表）归一为要生成的周期列表。
+
+    支持：单个 / 多个 / 'all'(周+月+年) / 'none'(不生成)。去重保序。
+    """
+    if value is None:
+        return []
+    modes = [value] if isinstance(value, str) else list(value)
+    if "none" in modes:
+        return []
+    if "all" in modes:
+        return ["weekly", "monthly", "annually"]
+    out = []
+    for m in modes:
+        if m not in out:
+            out.append(m)
+    return out
+
+
 def cmd_sync(args):
     """定时自动化入口：拉数据 → 增量更新知识库 → 生成周/月报，一条命令跑完。"""
     import os
@@ -209,24 +228,32 @@ def cmd_sync(args):
     print(f"  知识库已更新：书籍 {counts['books']} · 作者 {counts['authors']} · "
           f"主题 {counts['topics']} · 仪表盘 {counts['dashboards']}")
 
-    # 周期报告写进知识库
-    if args.report_mode != "none":
+    # 周期报告写进知识库（可一次生成多种：周/月/年）
+    modes = _resolve_report_modes(args.report_mode)
+    if modes:
+        engine = None
         try:
-            rstat = plat.read_stat(mode=args.report_mode)
-            ai_summary = None
+            engine = ai.get_engine(cfg)
+        except Exception:
+            engine = None
+        rdir = os.path.join(args.out, "07-报告")
+        os.makedirs(rdir, exist_ok=True)
+        for mode in modes:
             try:
-                ai_summary = ai.summarize_reading(rstat, ai.get_engine(cfg))
-            except Exception:
-                pass
-            md = render_digest_md(rstat, args.report_mode, ai_summary=ai_summary)
-            rdir = os.path.join(args.out, "07-报告")
-            os.makedirs(rdir, exist_ok=True)
-            fname = period_slug(args.report_mode) + ".md"
-            with open(os.path.join(rdir, fname), "w", encoding="utf-8") as f:
-                f.write(md)
-            print(f"  已生成{args.report_mode}报告：07-报告/{fname}")
-        except Exception as e:
-            print(f"  ⚠️ 生成周期报告失败：{e}")
+                rstat = plat.read_stat(mode=mode)
+                ai_summary = None
+                if engine is not None:
+                    try:
+                        ai_summary = ai.summarize_reading(rstat, engine)
+                    except Exception:
+                        pass
+                md = render_digest_md(rstat, mode, ai_summary=ai_summary)
+                fname = period_slug(mode) + ".md"
+                with open(os.path.join(rdir, fname), "w", encoding="utf-8") as f:
+                    f.write(md)
+                print(f"  已生成{mode}报告：07-报告/{fname}")
+            except Exception as e:
+                print(f"  ⚠️ 生成 {mode} 报告失败：{e}")
 
     dt = (datetime.now() - t0).total_seconds()
     print(f"[{datetime.now():%Y-%m-%d %H:%M}] sync 完成，用时 {dt:.0f}s → {args.out}")
@@ -353,9 +380,11 @@ def build_parser():
     s.add_argument("--out", default="./MyReadingVault", help="知识库输出目录")
     s.add_argument("--name", default="我的读书藏书库", help="知识库名称")
     s.add_argument("--manual", help="手动藏书 JSON 文件路径")
-    s.add_argument("--report-mode", default="weekly",
-                   choices=["weekly", "monthly", "annually", "none"],
-                   help="生成的周期报告类型（none=不生成）")
+    s.add_argument("--report-mode", nargs="+", default=["weekly", "monthly", "annually"],
+                   choices=["weekly", "monthly", "annually", "all", "none"],
+                   metavar="MODE",
+                   help="生成的周期报告类型，可多选：weekly monthly annually all none。"
+                        "默认三种全生成；all 等于三种；none 不生成")
     s.add_argument("--overwrite", action="store_true", help="全量覆盖（默认增量合并）")
     s.add_argument("--enrich", action="store_true", help="顺带元数据增强")
     s.add_argument("--enrich-source", default="mock", choices=["mock", "douban"])

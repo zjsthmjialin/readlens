@@ -122,14 +122,15 @@ readlens vault --enrich --out ./MyVault   # 生成知识库时顺带补全元数
 
 ## 定时自动化（让知识库自动生长）
 
-一条命令跑完整个流程——拉数据 → 增量更新知识库 → 生成周/月报 → 落统计快照：
+一条命令跑完整个流程——拉数据 → 增量更新知识库 → 生成周/月/年报 → 落统计快照：
 
 ```bash
-export WEREAD_API_KEY=wrk-你的key
-readlens sync --platform weread --out ./MyVault --report-mode weekly
+export WEREAD_API_KEY=wrk-你的key     # 设了 key 自动启用微信读书，无需 --platform
+readlens sync --out ./MyVault        # 默认一次生成周/月/年三份报告
 ```
 
-再用 macOS launchd 或 cron 定时跑它，知识库就会每周/每月自动更新、自动出周报月报。
+想只出某一种：`readlens sync --out ./MyVault --report-mode monthly`（可多选，或 `none` 不生成）。
+再用 macOS launchd 或 cron 定时跑它，知识库就会每周/每月自动更新、自动出报告。
 配置见 [`docs/AUTOMATION.md`](docs/AUTOMATION.md)。周期报告写入知识库的 `07-报告/`，
 `06-统计快照/趋势.md` 自动累积对比。
 

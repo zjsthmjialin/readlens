@@ -7,15 +7,16 @@
 
 ## 命令
 ```
-readlens sync --platform weread --out ./MyVault --report-mode weekly|monthly|annually|none \
+readlens sync --out ./MyVault [--report-mode weekly monthly annually|all|none] \
               [--manual books.json] [--enrich] [--overwrite]
 ```
-- 需要 `WEREAD_API_KEY`（接真实数据）；不加 `--platform weread` 则用离线 mock。
+- 设了 `WEREAD_API_KEY` 自动启用微信读书（无需 `--platform`）；否则离线 mock。
+- `--report-mode` 可多选，**默认周/月/年三份全生成**；`all` 等于三份，`none` 不生成。
 - 幂等：增量更新不覆盖手写内容；同周期报告覆盖同一文件。
 
 ## 产物
 - 知识库照常更新（书籍/作者/主题/仪表盘/可视化）。
-- `07-报告/{周报|月报}-{周期}.md`：时长/天数/对比/Top 书/偏好/AI 小结。
+- `07-报告/{周报|月报|年报}-{周期}.md`：时长/天数/对比/Top 书/偏好/AI 小结。
 - `06-统计快照/history.json` + `趋势.md`：累积对比。
 
 ## 定时（本机）

@@ -333,18 +333,30 @@ def test_digest_and_slug():
     assert period_slug("weekly", date(2026, 8, 9)).startswith("周报-2026-W")
 
 
+def test_report_modes_resolve():
+    """--report-mode 归一：单/多/all/none。"""
+    from readlens.cli import _resolve_report_modes
+    assert _resolve_report_modes("weekly") == ["weekly"]
+    assert _resolve_report_modes(["all"]) == ["weekly", "monthly", "annually"]
+    assert _resolve_report_modes(["none", "weekly"]) == []
+    assert _resolve_report_modes(["monthly", "monthly", "weekly"]) == ["monthly", "weekly"]
+
+
 def test_sync_command(tmp_path):
-    """sync 一条命令：生成知识库 + 周期报告写入 07-报告。"""
+    """sync 一条命令：生成知识库 + 一次生成周/月/年三种报告写入 07-报告。"""
     import argparse
     from readlens.cli import cmd_sync
     out = str(tmp_path / "v")
     args = argparse.Namespace(config=None, platform="mock", out=out,
-                              name="测试库", manual=None, report_mode="weekly",
+                              name="测试库", manual=None,
+                              report_mode=["weekly", "monthly", "annually"],
                               overwrite=False, enrich=False, enrich_source="mock")
     cmd_sync(args)
     assert os.path.exists(os.path.join(out, "📖 首页.md"))
     reports = os.listdir(os.path.join(out, "07-报告"))
     assert any(r.startswith("周报-") for r in reports)
+    assert any(r.startswith("月报-") for r in reports)
+    assert any(r.startswith("年报-") for r in reports)
     # 幂等：再跑一次不新增重复文件
     cmd_sync(args)
     assert len(os.listdir(os.path.join(out, "07-报告"))) == len(reports)

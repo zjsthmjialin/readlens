@@ -11,9 +11,13 @@
 ```bash
 cd "/Users/jinsongmini/Projects/ReadLens  260808"
 export WEREAD_API_KEY=wrk-你的key
-python3 -m readlens.cli sync --platform weread --out ./MyVault --report-mode weekly
+python3 -m readlens.cli sync --out ./MyVault
 ```
-看到「知识库已更新 …」「已生成 weekly 报告 …」即成功。确认无误后再设定时。
+看到「知识库已更新 …」「已生成 weekly/monthly/annually 报告 …」即成功。确认无误后再设定时。
+
+> 设了 `WEREAD_API_KEY` 会自动启用微信读书，无需 `--platform weread`。
+> `sync` **默认一次生成周/月/年三份报告**；只要某一种就加 `--report-mode monthly`（可多选），
+> 或 `--report-mode none` 不生成。下面 launchd/cron 示例里可按需增删该参数。
 
 ## 方式 A · macOS launchd（推荐，开机常驻）
 
@@ -32,9 +36,7 @@ python3 -m readlens.cli sync --platform weread --out ./MyVault --report-mode wee
     <string>/usr/bin/python3</string>
     <string>-m</string><string>readlens.cli</string>
     <string>sync</string>
-    <string>--platform</string><string>weread</string>
     <string>--out</string><string>/Users/jinsongmini/Projects/ReadLens  260808/MyVault</string>
-    <string>--report-mode</string><string>weekly</string>
   </array>
   <key>EnvironmentVariables</key>
   <dict>
@@ -68,8 +70,8 @@ launchctl unload ~/Library/LaunchAgents/com.readlens.sync.plist   # 停用
 launchctl list | grep readlens                                    # 查看是否已注册
 ```
 
-> 月报：把 `--report-mode weekly` 改成 `monthly`，`StartCalendarInterval` 改成
-> `<key>Day</key><integer>1</integer>`（每月 1 号）。可以同时建两个 plist（周报+月报），Label 不同即可。
+> `sync` 每次都会刷新周/月/年三份报告，定时频率（每天/每周）只决定「多久更新一次」，
+> 内容始终是最新三份。想只出某一种，在 `ProgramArguments` 里加 `--report-mode` + 具体值即可。
 
 ## 方式 B · cron（Linux / 也可用于 mac）
 
@@ -80,7 +82,7 @@ crontab -e
 ```
 加一行（每周一 08:00）：
 ```
-0 8 * * 1 cd "/Users/jinsongmini/Projects/ReadLens  260808" && . ~/.readlens.env && /usr/bin/python3 -m readlens.cli sync --platform weread --out ./MyVault --report-mode weekly >> /tmp/readlens-sync.log 2>&1
+0 8 * * 1 cd "/Users/jinsongmini/Projects/ReadLens  260808" && . ~/.readlens.env && /usr/bin/python3 -m readlens.cli sync --out ./MyVault >> /tmp/readlens-sync.log 2>&1
 ```
 
 ## 安全与幂等

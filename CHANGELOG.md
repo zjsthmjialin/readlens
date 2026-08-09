@@ -4,8 +4,10 @@
 
 ## [0.5.0] - 2026-08-09
 ### 新增（D1 定时自动化）
-- **`readlens sync`**：一条命令完成「拉数据 → 增量更新知识库 → 生成周/月报写入 `07-报告/` → 落统计快照」，幂等可重复跑。
-- **周期报告摘要** `readlens/report/digest.py`：把 ReadStat 渲染成 Obsidian 原生 markdown 周报/月报（时长/天数/对比/Top 书/偏好/AI 小结），同周期覆盖同一文件。
+- **`readlens sync`**：一条命令完成「拉数据 → 增量更新知识库 → 生成周/月/年报写入 `07-报告/` → 落统计快照」，幂等可重复跑。
+- **周期报告摘要** `readlens/report/digest.py`：把 ReadStat 渲染成 Obsidian 原生 markdown 报告（时长/天数/对比/Top 书/偏好/AI 小结），同周期覆盖同一文件。
+- **`--report-mode` 支持多选**：`weekly monthly annually all none`，**默认一次生成周/月/年三份**（面向分发，兼顾不同用户习惯）。
+- **便利**：设置了 `WEREAD_API_KEY` 且未显式指定平台时，自动启用 `weread`（无需每次加 `--platform`）。
 - **`docs/AUTOMATION.md`**：macOS launchd + Linux cron 定时方案，含 Key 安全与幂等说明。
 
 ## [0.4.0] - 2026-08-09
