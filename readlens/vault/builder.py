@@ -1,6 +1,7 @@
 """Obsidian 知识库生成器主逻辑。"""
 from __future__ import annotations
 
+import json
 import os
 import re
 import time
@@ -64,6 +65,39 @@ class VaultConfig:
     overwrite: bool = True
     incremental: bool = True   # True=合并保护手写内容/手填字段；False=全量覆盖
     snapshot: bool = True      # 是否记录统计快照并生成趋势页
+    obsidian_config: bool = True  # 是否预置 .obsidian 配置（启用 Dataview + 开 JS 查询）
+
+
+def _write_obsidian_config(root: str) -> int:
+    """在库里预置 .obsidian 配置，降低 Obsidian 端的设置门槛。
+
+    - `community-plugins.json`：列入 dataview（安装后自动启用，无需手动 enable）。
+    - `plugins/dataview/data.json`：预先开启 DataviewJS（免去手动「Enable JavaScript Queries」）。
+    **只在文件不存在时写入**，绝不覆盖用户已有的 .obsidian 设置。返回写入的文件数。
+    """
+    written = 0
+    base = os.path.join(root, ".obsidian")
+    os.makedirs(base, exist_ok=True)
+
+    cp = os.path.join(base, "community-plugins.json")
+    if not os.path.exists(cp):
+        with open(cp, "w", encoding="utf-8") as f:
+            json.dump(["dataview"], f, ensure_ascii=False, indent=2)
+        written += 1
+
+    dv_dir = os.path.join(base, "plugins", "dataview")
+    os.makedirs(dv_dir, exist_ok=True)
+    dv = os.path.join(dv_dir, "data.json")
+    if not os.path.exists(dv):
+        with open(dv, "w", encoding="utf-8") as f:
+            json.dump({
+                "enableDataviewJs": True,
+                "enableInlineDataviewJs": True,
+                "prettyRenderInlineFields": True,
+                "refreshEnabled": True,
+            }, f, ensure_ascii=False, indent=2)
+        written += 1
+    return written
 
 
 def _render(fm_lines: List[str], auto_inner: str, user_tail: str) -> str:
@@ -624,6 +658,10 @@ def build_vault(notes: List[Note], config: VaultConfig,
     with open(os.path.join(root, "README.md"), "w", encoding="utf-8") as f:
         f.write(T.VAULT_README)
     counts["misc"] += 5
+
+    # 预置 Obsidian 配置（开箱即用：Dataview + JS 查询）
+    if config.obsidian_config:
+        counts["misc"] += _write_obsidian_config(root)
 
     # 统计快照 + 趋势页（按日期 upsert，累积对比）
     if config.snapshot:

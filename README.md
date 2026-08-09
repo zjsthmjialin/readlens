@@ -192,6 +192,7 @@ tests/               单元测试
 
 ## 路线图与发布
 
+- 运作机制与使用手册：[`docs/GUIDE.md`](docs/GUIDE.md)
 - 更新日志：[`CHANGELOG.md`](CHANGELOG.md)
 - 完整功能清单：[`docs/FEATURES.md`](docs/FEATURES.md)
 - 发布到 PyPI 的操作手册：[`docs/RELEASE.md`](docs/RELEASE.md)

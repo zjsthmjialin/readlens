@@ -2,6 +2,12 @@
 
 本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [0.6.0] - 2026-08-09
+### 新增（降门槛 · 开箱即用第一层）
+- 生成知识库时**预置 `.obsidian` 配置**：列入 Dataview（安装后自动启用）、**预开启 DataviewJS**，
+  省去用户手动「开启 JavaScript Queries」；仪表盘/可视化/购书清单打开即渲染（仍需一次性安装 Dataview 插件）。
+- 只在文件不存在时写入，**绝不覆盖**用户已有 `.obsidian` 设置；`--no-obsidian-config` 可关。
+
 ## [0.5.2] - 2026-08-09
 ### 新增（D1 定时自动化 · 首个完整发布）
 > 说明：0.5.0 / 0.5.1 因发布过程中的标签问题未完整上线，本 0.5.2 为 D1 的首个完整正式版。

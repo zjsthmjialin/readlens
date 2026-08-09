@@ -139,7 +139,8 @@ def cmd_vault(args):
             stat = None
     vc = VaultConfig(out_dir=args.out, vault_name=args.name,
                      incremental=not args.overwrite,
-                     snapshot=not args.no_snapshot)
+                     snapshot=not args.no_snapshot,
+                     obsidian_config=not args.no_obsidian_config)
     counts = build_vault(notes, vc, stat=stat, manual_books=manual)
     mode = "全量覆盖" if args.overwrite else "增量合并（保护手写内容/手填字段）"
     print(f"更新模式：{mode}")
@@ -223,7 +224,8 @@ def cmd_sync(args):
         print(f"  ⚠️ 读取总体统计失败（跳过快照）：{e}")
 
     vc = VaultConfig(out_dir=args.out, vault_name=args.name,
-                     incremental=not args.overwrite)
+                     incremental=not args.overwrite,
+                     obsidian_config=not getattr(args, "no_obsidian_config", False))
     counts = build_vault(notes, vc, stat=overall, manual_books=manual)
     print(f"  知识库已更新：书籍 {counts['books']} · 作者 {counts['authors']} · "
           f"主题 {counts['topics']} · 仪表盘 {counts['dashboards']}")
@@ -370,6 +372,8 @@ def build_parser():
                    help="全量覆盖（默认增量合并，保护手写内容与手填字段）")
     s.add_argument("--no-snapshot", action="store_true",
                    help="不记录统计快照/趋势页")
+    s.add_argument("--no-obsidian-config", action="store_true",
+                   help="不预置 .obsidian 配置（默认预置：启用 Dataview + 开 JS 查询）")
     s.add_argument("--enrich", action="store_true",
                    help="生成前用元数据源补全缺失的 isbn/cover/publisher/pubdate")
     s.add_argument("--enrich-source", default="mock", choices=["mock", "douban"],
@@ -386,6 +390,8 @@ def build_parser():
                    help="生成的周期报告类型，可多选：weekly monthly annually all none。"
                         "默认三种全生成；all 等于三种；none 不生成")
     s.add_argument("--overwrite", action="store_true", help="全量覆盖（默认增量合并）")
+    s.add_argument("--no-obsidian-config", action="store_true",
+                   help="不预置 .obsidian 配置")
     s.add_argument("--enrich", action="store_true", help="顺带元数据增强")
     s.add_argument("--enrich-source", default="mock", choices=["mock", "douban"])
     s.set_defaults(func=cmd_sync)

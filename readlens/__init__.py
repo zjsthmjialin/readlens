@@ -7,7 +7,7 @@
 - AI 增值分析（总结 / 主题串联 / 问答 / 推荐）
 """
 
-__version__ = "0.5.2"
+__version__ = "0.6.0"
 
 from .models import Book, Highlight, Thought, Note, ReadStat, CategoryPref  # noqa: F401
 from .adapters import get_platform  # noqa: F401

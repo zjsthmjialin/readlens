@@ -362,6 +362,31 @@ def test_sync_command(tmp_path):
     assert len(os.listdir(os.path.join(out, "07-报告"))) == len(reports)
 
 
+def test_vault_obsidian_config(tmp_path):
+    """预置 .obsidian：默认写入且开启 JS 查询；不覆盖已有；可关。"""
+    import json
+    from readlens.vault import build_vault, VaultConfig
+    plat = _plat()
+    notes = [plat.book_notes(n.book.book_id) for n in plat.notebooks()]
+
+    out = str(tmp_path / "v")
+    build_vault(notes, VaultConfig(out_dir=out))
+    cp = os.path.join(out, ".obsidian", "community-plugins.json")
+    dv = os.path.join(out, ".obsidian", "plugins", "dataview", "data.json")
+    assert "dataview" in json.load(open(cp, encoding="utf-8"))
+    assert json.load(open(dv, encoding="utf-8"))["enableDataviewJs"] is True
+
+    # 不覆盖用户已有配置
+    open(cp, "w", encoding="utf-8").write('["myplugin"]')
+    build_vault(notes, VaultConfig(out_dir=out))
+    assert "myplugin" in open(cp, encoding="utf-8").read()
+
+    # 可关闭
+    out2 = str(tmp_path / "v2")
+    build_vault(notes, VaultConfig(out_dir=out2, obsidian_config=False))
+    assert not os.path.exists(os.path.join(out2, ".obsidian"))
+
+
 def test_ai_offline():
     plat = _plat()
     engine = ai.get_engine(Config.load(None))
