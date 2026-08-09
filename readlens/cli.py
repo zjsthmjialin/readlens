@@ -25,16 +25,8 @@ from .models import Book, Note
 from .vault import build_vault, VaultConfig
 
 
-def _load_manual_books(path):
-    """从 JSON 载入手动藏书，转成 Note 列表。
-
-    JSON 为对象数组，字段对应 Book（book_id 可省略，用 title 生成）。
-    """
-    import json
-    if not path or not os.path.exists(path):
-        return []
-    with open(path, encoding="utf-8") as f:
-        rows = json.load(f)
+def _rows_to_notes(rows):
+    """把一组藏书字典转成 Note 列表（供 JSON 文件与内置示例共用）。"""
     out = []
     for i, r in enumerate(rows):
         b = Book(
@@ -51,6 +43,19 @@ def _load_manual_books(path):
         )
         out.append(Note(book=b))
     return out
+
+
+def _load_manual_books(path):
+    """从 JSON 载入手动藏书，转成 Note 列表。
+
+    JSON 为对象数组，字段对应 Book（book_id 可省略，用 title 生成）。
+    """
+    import json
+    if not path or not os.path.exists(path):
+        return []
+    with open(path, encoding="utf-8") as f:
+        rows = json.load(f)
+    return _rows_to_notes(rows)
 
 
 def _load(args):
@@ -133,7 +138,8 @@ def cmd_vault(args):
         except Exception:
             stat = None
     vc = VaultConfig(out_dir=args.out, vault_name=args.name,
-                     incremental=not args.overwrite)
+                     incremental=not args.overwrite,
+                     snapshot=not args.no_snapshot)
     counts = build_vault(notes, vc, stat=stat, manual_books=manual)
     mode = "全量覆盖" if args.overwrite else "增量合并（保护手写内容/手填字段）"
     print(f"更新模式：{mode}")
@@ -150,12 +156,16 @@ def cmd_quickstart(args):
     cfg.data["platform"] = "mock"          # 强制离线示例数据
     plat = get_platform(cfg)
     notes = [plat.book_notes(n.book.book_id) for n in plat.notebooks()]
+    manual = []
+    if getattr(args, "with_manual", False):
+        from .sampledata import SAMPLE_MANUAL
+        manual = _rows_to_notes(SAMPLE_MANUAL)
     try:
         stat = plat.read_stat(mode="overall")
     except Exception:
         stat = None
     vc = VaultConfig(out_dir=args.out, vault_name=args.name, incremental=True)
-    counts = build_vault(notes, vc, stat=stat)
+    counts = build_vault(notes, vc, stat=stat, manual_books=manual)
     print("🎉 ReadLens 已用内置离线示例数据生成一个演示知识库！")
     print(f"   位置：{args.out}")
     print(f"   书籍 {counts['books']} · 作者 {counts['authors']} · "
@@ -219,6 +229,8 @@ def build_parser():
     s = sub.add_parser("quickstart", help="一键用内置离线数据生成演示知识库（无需 Key）")
     s.add_argument("--out", default="./ReadLensDemo", help="演示知识库输出目录")
     s.add_argument("--name", default="ReadLens 演示书库", help="知识库名称")
+    s.add_argument("--with-manual", action="store_true",
+                   help="同时纳入一组内置示例藏书，演示手动藏书入库")
     s.set_defaults(func=cmd_quickstart)
 
     s = sub.add_parser("search", help="搜索书籍")
@@ -255,6 +267,8 @@ def build_parser():
     s.add_argument("--no-stat", action="store_true", help="不生成统计快照")
     s.add_argument("--overwrite", action="store_true",
                    help="全量覆盖（默认增量合并，保护手写内容与手填字段）")
+    s.add_argument("--no-snapshot", action="store_true",
+                   help="不记录统计快照/趋势页")
     s.add_argument("--enrich", action="store_true",
                    help="生成前用元数据源补全缺失的 isbn/cover/publisher/pubdate")
     s.add_argument("--enrich-source", default="mock", choices=["mock", "douban"],

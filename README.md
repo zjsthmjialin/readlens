@@ -12,8 +12,8 @@ ReadLens 脱胎于 [Tencent/WeChatReading](https://github.com/Tencent/WeChatRead
 ## ⚡ 30 秒上手
 
 ```bash
-pip install readlens           # 或 pipx install readlens（隔离安装，推荐）
-readlens quickstart            # 用内置离线数据一键生成演示知识库，无需任何 Key
+pip install readlens               # 或 pipx install readlens（隔离安装，推荐）
+readlens quickstart --with-manual  # 用内置离线数据一键生成演示知识库，无需任何 Key
 ```
 
 命令跑完会在 `./ReadLensDemo` 生成一个完整的 Obsidian 知识库——用 Obsidian
@@ -39,7 +39,8 @@ readlens quickstart            # 用内置离线数据一键生成演示知识�
 4. **AI 增值** — 笔记总结、跨书主题串联、读书问答、个性化推荐
 5. **📚 Obsidian 知识库** — 把读书笔记 + 手动藏书生成一个深度适配 Dataview 的
    个人读书/藏书知识库：每本书一张笔记、作者中心页、主题 MOC、仪表盘、时间线，
-   支持**内嵌封面图**、**DataviewJS 可视化统计**（评分分布/分类占比/各年读完），
+   支持**内嵌封面图**、**DataviewJS 可视化统计**（评分分布/分类占比/各年读完/阅读热力）、
+   **购书清单**、**统计快照与趋势**（每次生成落一份带日期快照、可对比），
    以及**增量更新**（重复生成不覆盖你的手写笔记与手填字段）。
 
 ## 📚 生成 Obsidian 读书/藏书知识库（推荐用法）
@@ -58,6 +59,7 @@ MyReadingVault/
 ├── 03-主题/           主题 MOC（按分类聚合）
 ├── 04-仪表盘/         在读 / 已读 / 想读 / 购书清单 / 评分排行 / 藏书清单 / 阅读统计 / 可视化统计
 ├── 05-阅读时间线.md
+├── 06-统计快照/       history.json（累积快照）+ 趋势.md（与上期对比）
 ├── 00-模板/          书籍模板 + 藏书模板（配合 Templater/QuickAdd）
 └── README.md
 ```

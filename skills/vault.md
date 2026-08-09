@@ -36,6 +36,14 @@ frontmatter 分两类（见 `vault/merge.py`）：
 `04-仪表盘/购书清单.md` 聚合 `owned: none` 的书。在书籍笔记里填 `priority: 高/中/低`
 按优先级排序，`price_target` 记心理价位。这两个字段属于 PRESERVE_IF_SET，增量更新时保留。
 
+## 阅读热力
+可视化统计页含「阅读热力（年×月）」网格，按 `finished` 月份统计，方块深浅 + 数字表数量。
+
+## 统计快照与趋势
+每次生成 vault 落一份带日期快照到 `06-统计快照/history.json`（按日期 upsert、持久累积），
+并生成 `趋势.md` 展示历次与「与上期对比(±)」。`readlens vault --no-snapshot` 可关闭。
+见 `readlens/vault/snapshot.py`。
+
 ## 生成的 vault 结构
 ```
 MyReadingVault/

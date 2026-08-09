@@ -12,6 +12,7 @@ from typing import List, Optional, Dict
 from ..models import Note, Book, ReadStat
 from . import templates as T
 from .merge import (MARK_END, wrap_auto, merge_frontmatter, extract_user_tail)
+from . import snapshot as S
 
 # 目录名
 DIR_BOOKS = "01-书籍"
@@ -62,6 +63,7 @@ class VaultConfig:
     vault_name: str = "我的读书藏书库"
     overwrite: bool = True
     incremental: bool = True   # True=合并保护手写内容/手填字段；False=全量覆盖
+    snapshot: bool = True      # 是否记录统计快照并生成趋势页
 
 
 def _render(fm_lines: List[str], auto_inner: str, user_tail: str) -> str:
@@ -439,6 +441,43 @@ try {
     dv.table(['年份', '读完', ''],
       yrs.map(y => [y, byYear[y], bar(byYear[y], ymax)]));
   }
+
+  // —— 阅读热力（年 × 月）——
+  dv.header(2, '🔥 阅读热力（按读完月份）');
+  const grid = {};   // year -> [12] 每月读完数
+  for (const p of pages) {
+    const f = p.finished;
+    if (!f) continue;
+    let y, mo;
+    if (f.year != null && f.month != null) { y = f.year; mo = f.month; }
+    else {
+      const s = String(f);
+      const mm = s.match(/^(\d{4})-(\d{2})/);
+      if (!mm) continue;
+      y = +mm[1]; mo = +mm[2];
+    }
+    if (!grid[y]) grid[y] = new Array(12).fill(0);
+    if (mo >= 1 && mo <= 12) grid[y][mo - 1]++;
+  }
+  const gyears = Object.keys(grid).sort();
+  if (gyears.length === 0) {
+    dv.paragraph('_暂无可用于热力图的读完日期。_');
+  } else {
+    let hmax = 1;
+    for (const y of gyears) hmax = Math.max(hmax, ...grid[y]);
+    // 用 5 档方块表示热度：无=░，其余按比例 ▁▂▃█
+    const blocks = ['·', '▂', '▄', '▆', '█'];
+    const heat = n => n === 0 ? blocks[0]
+      : blocks[Math.min(4, 1 + Math.floor((n - 1) / Math.max(1, hmax) * 3))];
+    const months = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'];
+    dv.table(['年', ...months, '合计'],
+      gyears.map(y => {
+        const row = grid[y];
+        const cells = row.map(n => n === 0 ? heat(0) : `${heat(n)}${n}`);
+        return [y, ...cells, row.reduce((a, b) => a + b, 0)];
+      }));
+    dv.paragraph('_方块越满代表当月读完越多；数字为当月读完本数。_');
+  }
 } catch (e) {
   dv.paragraph('⚠️ 渲染失败：' + e.message +
     '（请确认已启用 Dataview 的 JavaScript Queries）');
@@ -483,7 +522,7 @@ LIMIT 8
 ## 快捷入口
 - [[在读]] · [[已读]] · [[想读(愿望清单)]] · [[购书清单]]
 - [[评分排行]] · [[藏书清单]] · [[阅读统计]] · [[可视化统计]]
-- [[05-阅读时间线|📅 阅读时间线]]
+- [[05-阅读时间线|📅 阅读时间线]] · [[趋势|📈 统计趋势]]
 
 ## 藏书速览
 ```dataview
@@ -585,5 +624,14 @@ def build_vault(notes: List[Note], config: VaultConfig,
     with open(os.path.join(root, "README.md"), "w", encoding="utf-8") as f:
         f.write(T.VAULT_README)
     counts["misc"] += 5
+
+    # 统计快照 + 趋势页（按日期 upsert，累积对比）
+    if config.snapshot:
+        snap = S.compute_snapshot(all_notes, stat)
+        history = S.record_snapshot(root, snap)
+        with open(os.path.join(root, S.DIR_SNAP, "趋势.md"), "w",
+                  encoding="utf-8") as f:
+            f.write(S.trend_page_md(history))
+        counts["misc"] += 1
 
     return counts

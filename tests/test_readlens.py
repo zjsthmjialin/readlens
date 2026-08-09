@@ -215,6 +215,62 @@ def test_enrich_douban_degrades(monkeypatch):
     assert DoubanFetcher().fetch("三体") == {}
 
 
+def test_vault_snapshot_upsert(tmp_path):
+    """快照按日期 upsert：同日重生不重复；趋势页与 history.json 生成。"""
+    import json
+    from readlens.vault import build_vault, VaultConfig
+    from readlens.vault import snapshot as S
+    plat = _plat()
+    notes = [plat.book_notes(n.book.book_id) for n in plat.notebooks()]
+    out = str(tmp_path / "vault")
+    vc = VaultConfig(out_dir=out)
+    stat = plat.read_stat("overall")
+    build_vault(notes, vc, stat=stat)
+    build_vault(notes, vc, stat=stat)      # 同日再来一次
+    hist_path = os.path.join(out, S.DIR_SNAP, "history.json")
+    history = json.load(open(hist_path, encoding="utf-8"))
+    today = [h for h in history if h["date"]]
+    # 同一天只应有一条
+    assert len({h["date"] for h in history}) == len(history)
+    assert len(history) == 1
+    assert os.path.exists(os.path.join(out, S.DIR_SNAP, "趋势.md"))
+
+
+def test_snapshot_compute_and_trend_delta():
+    """compute_snapshot 计数正确；趋势页含与上期对比(±)。"""
+    from readlens.vault import snapshot as S
+    plat = _plat()
+    notes = [plat.book_notes(n.book.book_id) for n in plat.notebooks()]
+    s1 = S.compute_snapshot(notes, plat.read_stat("overall"), day="2026-01-01")
+    assert s1["total"] == len(notes)
+    assert s1["已读"] + s1["在读"] + s1["想读"] == len(notes)
+    s2 = dict(s1); s2["date"] = "2026-02-01"; s2["已读"] = s1["已读"] + 2
+    page = S.trend_page_md([s1, s2])
+    assert "统计趋势" in page and "(+2)" in page   # 与上期对比出现
+
+
+def test_quickstart_sample_manual():
+    """内置示例藏书可被 --with-manual 纳入（离线，无外部文件）。"""
+    from readlens.cli import _rows_to_notes
+    from readlens.sampledata import SAMPLE_MANUAL
+    notes = _rows_to_notes(SAMPLE_MANUAL)
+    assert len(notes) == len(SAMPLE_MANUAL) >= 3
+    titles = {n.book.title for n in notes}
+    assert "沙丘" in titles
+    assert any(n.book.owned == "none" for n in notes)   # 有待购书演示购书清单
+
+
+def test_vault_heatmap_section(tmp_path):
+    """可视化统计页含阅读热力（年×月）区块。"""
+    from readlens.vault import build_vault, VaultConfig
+    plat = _plat()
+    notes = [plat.book_notes(n.book.book_id) for n in plat.notebooks()]
+    out = str(tmp_path / "vault")
+    build_vault(notes, VaultConfig(out_dir=out))
+    viz = open(os.path.join(out, "04-仪表盘", "可视化统计.md"), encoding="utf-8").read()
+    assert "阅读热力" in viz and "grid" in viz
+
+
 def test_ai_offline():
     plat = _plat()
     engine = ai.get_engine(Config.load(None))

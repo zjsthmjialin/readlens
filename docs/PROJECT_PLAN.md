@@ -44,7 +44,7 @@
 ### Phase 2 · 数据更丰富
 - [x] 豆瓣元数据增强：`readlens/enrich/`（mock 离线 + douban 在线降级），补 ISBN/封面/出版信息
 - [ ] 微信读书写操作：`create_thought` / `add_to_shelf` 真实实现（接口已在 base 预留）
-- [ ] 阅读统计快照存档：每次导入落一份带日期的统计，支持趋势对比
+- [x] 阅读统计快照存档：每次导入落一份带日期快照（`06-统计快照/`）+ 趋势对比页
 
 ### Phase 3 · 分发与自动化
 - [x] **pip 包分发**：`pip install readlens` + `readlens quickstart` 一键上手；
@@ -67,5 +67,5 @@
 
 ## 7. 版本
 - v0.1.0：五大能力 + 知识库，离线可跑。
-- v0.2.0（当前）：Phase 1 = 封面 + DataviewJS 可视化 + 增量更新；
-  并完成 pip 包分发（`readlens quickstart` 一键上手）+ CI。知识库可日常使用、可分发。
+- v0.2.0：Phase 1 = 封面 + DataviewJS 可视化 + 增量更新；pip 分发 + CI + **已发布 PyPI**。
+- v0.3.0（当前）：阅读热力日历 + 统计快照/趋势 + 示例藏书随包 + 元数据增强(豆瓣)。
