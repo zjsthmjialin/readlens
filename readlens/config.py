@@ -13,7 +13,7 @@ except ImportError:  # pragma: no cover
 DEFAULTS: Dict[str, Any] = {
     "platform": "mock",
     "weread": {
-        "base_url": "https://weread.qq.com/r/weread-skills",
+        "base_url": "https://i.weread.qq.com/api/agent/gateway",
         "api_key": None,
         "skill_version": "1.0.3",
     },

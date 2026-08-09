@@ -186,3 +186,17 @@ tests/               单元测试
 ## 许可证
 
 Apache-2.0 — 参考并延展自 Tencent/WeChatReading（Apache-2.0）。
+
+
+
+
+
+
+
+
+
+
+
+cd "/Users/jinsongmini/Projects/ReadLens  260808"
+export WEREAD_API_KEY=wrk-aQQYGkApSUazQUw6gtlJeQAA
+python3 -m readlens.cli weread-check

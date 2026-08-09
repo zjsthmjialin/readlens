@@ -61,7 +61,7 @@
 
 ## 6. 已知限制与技术债
 - 原项目的平台侧 Skill 文档（search/book/shelf/notes/readdata/review/discover）未随本项目 vendored；weread 适配器按其口径用代码实现。若需可把原始 `.md` 收进 `docs/weread-api/` 备查。
-- `weread` 适配器未经真实 Key 联调（无 Key 环境）；字段映射基于原项目文档，接入真实数据后需校验。
+- ~~`weread` 适配器未联调~~ → v0.4.0 已按官方 2026 skills 文档对齐并**用真实 Key 线上联调通过**。
 - 离线 AI 引擎是抽取式占位，质量有限；接入 LLM 后显著提升。
 - ~~vault 全量覆盖会丢手写内容~~ → 已在 v0.2.0 用增量合并解决（`--overwrite` 可强制全量）。
 

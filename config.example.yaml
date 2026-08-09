@@ -5,9 +5,9 @@
 platform: mock
 
 weread:
-  # 网关地址（一般无需修改）
-  base_url: https://weread.qq.com/r/weread-skills
-  # API Key 也可通过环境变量 WEREAD_API_KEY 提供（环境变量优先）
+  # 官方 Agent API 网关地址（一般无需修改）
+  base_url: https://i.weread.qq.com/api/agent/gateway
+  # API Key 从 https://weread.qq.com/r/weread-skills 获取；也可用环境变量 WEREAD_API_KEY（优先）
   api_key: null
   skill_version: "1.0.3"
 

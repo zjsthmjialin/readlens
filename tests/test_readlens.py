@@ -271,6 +271,57 @@ def test_vault_heatmap_section(tmp_path):
     assert "阅读热力" in viz and "grid" in viz
 
 
+def test_weread_mapping_offline(monkeypatch):
+    """用假网关校验 weread 适配器字段映射与官方文档一致（无需真实 Key）。"""
+    from readlens.adapters.weread import WeReadPlatform
+
+    canned = {
+        "/store/search": {"results": [{"books": [
+            {"bookInfo": {"bookId": "b1", "title": "三体", "author": "刘慈欣",
+                          "category": "科幻"}, "newRating": 92, "readingCount": 100}]}]},
+        "/shelf/sync": {"books": [{"bookId": "b1", "title": "三体", "author": "刘慈欣",
+                                   "category": "科幻", "finishReading": 1}]},
+        "/book/info": {"title": "三体", "author": "刘慈欣", "category": "科幻",
+                       "publisher": "重庆出版社", "isbn": "9787536692930",
+                       "publishTime": "2008-01-01", "newRating": 92},
+        "/book/getprogress": {"book": {"progress": 100, "finishTime": 123}},
+        "/book/bookmarklist": {"updated": [{"bookmarkId": "h1", "chapterUid": 1,
+                               "markText": "黑暗森林", "createTime": 100}],
+                               "chapters": [{"chapterUid": 1, "chapterIdx": 1,
+                                             "title": "第一章"}]},
+        "/review/list/mine": {"reviews": [{"review": {"reviewId": "r1", "content": "想法",
+                              "abstract": "黑暗森林", "star": -1, "chapterName": "第一章"}}],
+                              "hasMore": 0},
+        "/readdata/detail": {"totalReadTime": 3600, "readDays": 10,
+                             "dayAverageReadTime": 360,
+                             "readLongest": [{"book": {"title": "三体", "author": "刘慈欣"},
+                                              "readTime": 3600}],
+                             "preferCategory": [{"categoryTitle": "科幻",
+                                                 "readingTime": 3600, "readingCount": 1}]},
+    }
+    plat = WeReadPlatform(base_url="http://fake", api_key="wrk-test")
+    monkeypatch.setattr(plat, "_call", lambda api_name, **kw: canned[api_name])
+
+    # 搜索
+    hits = plat.search("三体")
+    assert hits and hits[0].title == "三体" and hits[0].source == "weread"
+    # 书架：finished 来自 finishReading
+    shelf = plat.shelf()
+    assert shelf[0].finished is True and shelf[0].source == "weread"
+    # 单本笔记：source/isbn/pubdate/进度/读完 + 划线/想法
+    note = plat.book_notes("b1")
+    assert note.book.source == "weread" and note.book.owned == "digital"
+    assert note.book.isbn == "9787536692930" and note.book.pubdate == "2008"
+    assert note.book.progress == 100 and note.book.finished is True
+    assert note.highlights[0].chapter_title == "第一章"
+    assert note.thoughts[0].abstract == "黑暗森林"
+    # 阅读统计
+    stat = plat.read_stat("overall")
+    assert stat.total_hours == 1.0 and stat.read_days == 10
+    assert stat.read_longest[0]["title"] == "三体"
+    assert stat.prefer_category[0].title == "科幻"
+
+
 def test_ai_offline():
     plat = _plat()
     engine = ai.get_engine(Config.load(None))

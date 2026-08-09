@@ -2,6 +2,17 @@
 
 本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
+## [0.4.0] - 2026-08-09
+### 修正（weread 适配器按官方 2026 规格对齐）
+- 网关地址改为官方 `https://i.weread.qq.com/api/agent/gateway`（原默认误指取 Key 页面）。
+- `/book/info` 补充映射 `isbn` / `publishTime`→`pubdate`；weread 书正确标记 `source=weread, owned=digital`。
+- `book_notes` 增调 `/book/getprogress` 回填阅读进度与读完状态（否则统一模型误判为「想读」）。
+- 书架读完状态改用官方字段 `finishReading`（原误用 `markedStatus`）。
+- 修复 `config.py` 默认网关（原代码默认仍指向取 Key 页面，导致返回 HTML 而非 JSON）。
+- `_call` 增强诊断：非 JSON / 非 200 / errcode 非 0 时给出清晰错误；新增 `readlens weread-check` 鉴权诊断命令。
+- 新增离线映射测试：用假网关按官方文档字段结构校验 search/shelf/book_notes/read_stat。
+> ✅ 已用真实 Key 线上联调通过：search / shelf / notebooks / book_notes / getprogress / readdata / vault 全链路。
+
 ## [0.3.1] - 2026-08-09
 ### 变更
 - 确定中文名为 **阅镜**（ReadLens：阅=read，镜=lens），替换旧中文名「读透」。

@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "readlens"
-version = "0.3.1"
+version = "0.4.0"
 description = "阅镜 ReadLens — 阅读智能工具箱：多平台阅读数据的导出、报告、AI 分析与 Obsidian 知识库生成（脱胎于 Tencent/WeChatReading Skills）"
 readme = "README.md"
 requires-python = ">=3.9"

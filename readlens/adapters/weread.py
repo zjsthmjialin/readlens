@@ -26,6 +26,24 @@ _SCOPE_MAP = {
 }
 
 
+def _pubyear(publish_time) -> str:
+    """把 /book/info 的 publishTime 归一为出版年份字符串（尽力而为）。"""
+    if not publish_time:
+        return ""
+    s = str(publish_time)
+    # 形如 "2008-01-01" / "2008年"
+    import re
+    m = re.search(r"(19|20)\d{2}", s)
+    if m:
+        return m.group(0)
+    # 可能是 Unix 时间戳
+    try:
+        from datetime import datetime
+        return datetime.fromtimestamp(int(publish_time)).strftime("%Y")
+    except Exception:
+        return ""
+
+
 class WeReadPlatform(ReadingPlatform):
     name = "weread"
 
@@ -44,7 +62,7 @@ class WeReadPlatform(ReadingPlatform):
     # ---- 底层网关调用 ----
     def _call(self, api_name: str, **params) -> Dict[str, Any]:
         body = {"api_name": api_name, "skill_version": self.skill_version}
-        # 业务参数平铺在顶层（原项目强调不要包在 params 里）
+        # 业务参数平铺在顶层（与官方 SDK 一致：api_name/skill_version + 平铺参数）
         body.update({k: v for k, v in params.items() if v is not None})
         headers = {
             "Authorization": f"Bearer {self.api_key}",
@@ -52,8 +70,25 @@ class WeReadPlatform(ReadingPlatform):
         }
         resp = requests.post(self.base_url, json=body,
                              headers=headers, timeout=self.timeout)
-        resp.raise_for_status()
-        return resp.json()
+        text = resp.text or ""
+        if resp.status_code != 200:
+            raise RuntimeError(
+                f"微信读书网关 HTTP {resp.status_code}（api_name={api_name}）。"
+                f"响应体前 300 字：{text[:300]!r}")
+        try:
+            data = resp.json()
+        except ValueError:
+            raise RuntimeError(
+                f"微信读书网关返回非 JSON（HTTP 200, api_name={api_name}）。"
+                f"响应体前 300 字：{text[:300]!r}。"
+                "常见原因：API Key 无效/过期/未正确设置，或网络被代理拦截。"
+                "可先运行 `readlens weread-check` 单独验证鉴权。")
+        # 官方约定：errcode 非 0 即业务错误
+        if isinstance(data, dict) and data.get("errcode") not in (None, 0):
+            raise RuntimeError(
+                f"微信读书网关错误 errcode={data.get('errcode')}"
+                f"，errmsg={data.get('errmsg')}（api_name={api_name}）")
+        return data
 
     # ---- 搜索与书籍 ----
     def search(self, keyword: str, scope: str = "book", limit: int = 15) -> List[Book]:
@@ -87,8 +122,22 @@ class WeReadPlatform(ReadingPlatform):
             category=info.get("category", ""),
             intro=info.get("intro", ""),
             publisher=info.get("publisher", ""),
+            isbn=info.get("isbn", ""),
+            pubdate=_pubyear(info.get("publishTime")),
             rating=info.get("newRating"),
+            source="weread", owned="digital",
         )
+
+    def _progress(self, book_id: str):
+        """返回 (progress:int|None, finished:bool)；失败则 (None, False)。"""
+        try:
+            b = self._call("/book/getprogress", bookId=book_id).get("book", {})
+            p = b.get("progress")
+            if p is None:
+                return None, False
+            return int(p), int(p) == 100
+        except Exception:
+            return None, False
 
     # ---- 书架 ----
     def shelf(self) -> List[Book]:
@@ -100,7 +149,9 @@ class WeReadPlatform(ReadingPlatform):
                 title=b.get("title", ""),
                 author=b.get("author", ""),
                 cover=b.get("cover", ""),
-                finished=b.get("markedStatus") == 1,
+                category=b.get("category", ""),
+                finished=b.get("finishReading") == 1,   # 书架用 finishReading
+                source="weread", owned="digital",
             ))
         return out
 
@@ -119,6 +170,7 @@ class WeReadPlatform(ReadingPlatform):
                     cover=b.get("cover", ""),
                     progress=entry.get("readingProgress"),
                     finished=entry.get("markedStatus") == 1,
+                    source="weread", owned="digital",
                 )
                 note = Note(book=book, bookmark_count=entry.get("bookmarkCount", 0))
                 # 概览阶段用占位数量；完整内容需 book_notes 拉取
@@ -132,6 +184,11 @@ class WeReadPlatform(ReadingPlatform):
 
     def book_notes(self, book_id: str) -> Note:
         book = self.book_info(book_id)
+        # 补全阅读进度与读完状态（否则统一模型里会默认「想读」）
+        prog, finished = self._progress(book_id)
+        if prog is not None:
+            book.progress = prog
+        book.finished = finished
         note = Note(book=book)
         # 划线内容
         bm = self._call("/book/bookmarklist", bookId=book_id)

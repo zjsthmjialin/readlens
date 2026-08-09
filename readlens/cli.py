@@ -181,6 +181,29 @@ def cmd_quickstart(args):
     print("  更多命令见 readlens -h")
 
 
+def cmd_weread_check(args):
+    """诊断：验证微信读书网关鉴权是否通（调用只需鉴权的 /_list）。"""
+    cfg = Config.load(args.config)
+    cfg.data["platform"] = "weread"
+    try:
+        plat = get_platform(cfg)
+    except Exception as e:
+        print(f"❌ 初始化失败：{e}")
+        print("   请确认已设置 WEREAD_API_KEY 环境变量或 config.yaml 里的 weread.api_key。")
+        return
+    print(f"网关：{plat.base_url}")
+    print(f"Key：{'已设置（' + plat.api_key[:7] + '…）' if plat.api_key else '未设置'}")
+    try:
+        data = plat._call("/_list")
+    except Exception as e:
+        print(f"❌ 调用失败：{e}")
+        return
+    apis = data.get("apis") or data.get("list") or data
+    n = len(apis) if hasattr(apis, "__len__") else "?"
+    print(f"✅ 鉴权通过，网关可用。返回顶层字段：{list(data)[:10]}")
+    print("   接下来可试：readlens --platform weread search 三体")
+
+
 def cmd_enrich(args):
     """预览元数据增强会补全哪些字段（不落库）。"""
     from . import enrich
@@ -274,6 +297,9 @@ def build_parser():
     s.add_argument("--enrich-source", default="mock", choices=["mock", "douban"],
                    help="元数据来源：mock(离线) | douban(在线, best-effort)")
     s.set_defaults(func=cmd_vault)
+
+    s = sub.add_parser("weread-check", help="诊断微信读书网关鉴权是否通")
+    s.set_defaults(func=cmd_weread_check)
 
     s = sub.add_parser("enrich", help="预览元数据增强会补全哪些字段（不落库）")
     s.add_argument("--source", default="mock", choices=["mock", "douban"])
