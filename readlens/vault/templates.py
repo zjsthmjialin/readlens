@@ -24,6 +24,8 @@ source: manual       # weread | manual | douban | kindle
 owned: none          # physical(纸质) | digital(电子) | none(未拥有)
 location: ""         # 纸质藏书位置，如「书房A-3」
 price:               # 购入价格
+priority:            # 购书优先级：高 | 中 | 低（owned=none 时用于购书清单排序）
+price_target:        # 心理价位（可选）
 progress: 0          # 阅读进度 %
 started:             # 开始阅读 YYYY-MM-DD
 finished:            # 读完 YYYY-MM-DD

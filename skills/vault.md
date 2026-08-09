@@ -8,8 +8,33 @@
 ## 命令
 ```
 readlens vault --out ./MyReadingVault [--name 我的书库] \
-               [--manual examples/manual_collection.json] [--no-stat]
+               [--manual examples/manual_collection.json] [--no-stat] [--overwrite]
 ```
+- 默认**增量合并**：重复生成不会覆盖用户手写内容与手填字段。
+- `--overwrite`：全量覆盖（放弃保护，重建全部文件）。
+
+## 增量更新（默认开启）
+自动生成区用标记注释包裹：`<!-- readlens:auto:start -->` / `<!-- readlens:auto:end -->`。
+重生时**只替换标记之间**的内容，标记之后的手写区原样保留：
+- 书籍笔记：`## 我的笔记`
+- 作者页：`## 关于`
+- 主题页：`## 主题笔记`
+
+frontmatter 分两类（见 `vault/merge.py`）：
+- **REFRESH**（每次刷新）：status / progress / highlights / thoughts / platform_rating / title / author / source。
+- **PRESERVE_IF_SET**（有非空值则保留手填）：rating / isbn / publisher / cover / owned / location / price / started / finished / category 等。
+- 用户额外加的自定义字段一律保留。
+
+## 封面图
+`cover` 字段非空时，书籍笔记自动区顶部渲染 `![封面|150](URL)`（Obsidian 外链图片）。
+
+## 可视化统计页
+`04-仪表盘/可视化统计.md` 用 **DataviewJS** 渲染评分分布 / 分类占比 / 各年读完数量；
+需在 Dataview 设置里开启 *Enable JavaScript Queries*。
+
+## 购书清单
+`04-仪表盘/购书清单.md` 聚合 `owned: none` 的书。在书籍笔记里填 `priority: 高/中/低`
+按优先级排序，`price_target` 记心理价位。这两个字段属于 PRESERVE_IF_SET，增量更新时保留。
 
 ## 生成的 vault 结构
 ```
@@ -18,7 +43,7 @@ MyReadingVault/
 ├── 01-书籍/              每本书一张笔记（含 Dataview frontmatter）
 ├── 02-作者/              作者中心页（自动汇总该作者的书）
 ├── 03-主题/             主题 MOC（按分类聚合）
-├── 04-仪表盘/           在读/已读/想读/评分排行/藏书清单/阅读统计
+├── 04-仪表盘/           在读/已读/想读/评分排行/藏书清单/阅读统计/可视化统计
 ├── 05-阅读时间线.md
 ├── 00-模板/            书籍模板 + 藏书模板
 └── README.md

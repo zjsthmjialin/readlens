@@ -77,6 +77,144 @@ def test_vault_build(tmp_path):
     assert "```dataview" in home and "#book" in home
 
 
+def test_vault_incremental_preserves(tmp_path):
+    """增量更新：保护用户手填 frontmatter 与手写尾部，同时刷新计数。"""
+    import re
+    from readlens.vault import build_vault, VaultConfig
+    plat = _plat()
+    notes = [plat.book_notes(n.book.book_id) for n in plat.notebooks()]
+    out = str(tmp_path / "vault")
+    vc = VaultConfig(out_dir=out)
+    build_vault(notes, vc, stat=plat.read_stat("overall"))
+
+    bp = os.path.join(out, "01-书籍", "三体.md")
+    txt = open(bp, encoding="utf-8").read()
+    assert "<!-- readlens:auto:start -->" in txt and "## 我的笔记" in txt
+    # 用户手填 + 手写
+    txt = txt.replace('location: ""', 'location: "书房A-3"').replace("price: ", "price: 68")
+    txt = re.sub(r"## 我的笔记.*", "## 我的笔记\n\n手写读后感勿删", txt, flags=re.S)
+    open(bp, "w", encoding="utf-8").write(txt)
+
+    build_vault(notes, vc, stat=plat.read_stat("overall"))  # 再次增量
+    after = open(bp, encoding="utf-8").read()
+    assert 'location: "书房A-3"' in after
+    assert "price: 68" in after
+    assert "手写读后感勿删" in after
+    assert re.search(r"highlights: \d+", after)  # 计数仍在（已刷新）
+
+
+def test_vault_overwrite_mode(tmp_path):
+    """全量覆盖模式清除手写内容。"""
+    import re
+    from readlens.vault import build_vault, VaultConfig
+    plat = _plat()
+    notes = [plat.book_notes(n.book.book_id) for n in plat.notebooks()]
+    out = str(tmp_path / "vault")
+    build_vault(notes, VaultConfig(out_dir=out))
+    bp = os.path.join(out, "01-书籍", "三体.md")
+    txt = re.sub(r"## 我的笔记.*", "## 我的笔记\n\n应被覆盖", open(bp, encoding="utf-8").read(), flags=re.S)
+    open(bp, "w", encoding="utf-8").write(txt)
+    build_vault(notes, VaultConfig(out_dir=out, incremental=False))
+    assert "应被覆盖" not in open(bp, encoding="utf-8").read()
+
+
+def test_vault_cover_and_viz(tmp_path):
+    """封面图渲染 + DataviewJS 统计页存在。"""
+    from readlens.vault import build_vault, VaultConfig
+    from readlens.models import Book, Note
+    plat = _plat()
+    notes = [plat.book_notes(n.book.book_id) for n in plat.notebooks()]
+    manual = [Note(book=Book(book_id="c1", title="带封面的书", author="作者X",
+                             cover="https://img.example.com/c.jpg",
+                             source="manual", owned="physical"))]
+    out = str(tmp_path / "vault")
+    build_vault(notes, VaultConfig(out_dir=out), manual_books=manual)
+    cover_note = open(os.path.join(out, "01-书籍", "带封面的书.md"), encoding="utf-8").read()
+    assert "![封面|150](https://img.example.com/c.jpg)" in cover_note
+    viz = open(os.path.join(out, "04-仪表盘", "可视化统计.md"), encoding="utf-8").read()
+    assert "```dataviewjs" in viz and "评分分布" in viz
+
+
+def test_vault_author_topic_tail_preserved(tmp_path):
+    """作者页「## 关于」与主题页「## 主题笔记」手写区在重生后保留。"""
+    import re
+    from readlens.vault import build_vault, VaultConfig
+    plat = _plat()
+    notes = [plat.book_notes(n.book.book_id) for n in plat.notebooks()]
+    out = str(tmp_path / "vault")
+    vc = VaultConfig(out_dir=out)
+    build_vault(notes, vc)
+    ap = os.path.join(out, "02-作者", "刘慈欣.md")
+    txt = re.sub(r"## 关于.*", "## 关于\n\n刘慈欣是我最爱的科幻作者", open(ap, encoding="utf-8").read(), flags=re.S)
+    open(ap, "w", encoding="utf-8").write(txt)
+    build_vault(notes, vc)
+    assert "刘慈欣是我最爱的科幻作者" in open(ap, encoding="utf-8").read()
+
+
+def test_vault_buylist(tmp_path):
+    """购书清单页存在；priority 字段在书籍 frontmatter 中且增量更新保留。"""
+    import re
+    from readlens.vault import build_vault, VaultConfig
+    from readlens.models import Book, Note
+    plat = _plat()
+    notes = [plat.book_notes(n.book.book_id) for n in plat.notebooks()]
+    manual = [Note(book=Book(book_id="w1", title="想买的书", author="作者Y",
+                             category="随笔", source="manual", owned="none"))]
+    out = str(tmp_path / "vault")
+    vc = VaultConfig(out_dir=out)
+    build_vault(notes, vc, manual_books=manual)
+    buy = open(os.path.join(out, "04-仪表盘", "购书清单.md"), encoding="utf-8").read()
+    assert "购书清单" in buy and "owned" in buy
+    bp = os.path.join(out, "01-书籍", "想买的书.md")
+    txt = open(bp, encoding="utf-8").read()
+    assert "priority:" in txt and "price_target:" in txt
+    # 用户填 priority 后增量更新应保留
+    txt = txt.replace("priority: ", "priority: 高").replace("price_target: ", "price_target: 45")
+    open(bp, "w", encoding="utf-8").write(txt)
+    build_vault(notes, vc, manual_books=manual)
+    after = open(bp, encoding="utf-8").read()
+    assert "priority: 高" in after and "price_target: 45" in after
+
+
+def test_enrich_mock_only_fills_empty():
+    """离线增强：补空缺字段，且不覆盖已有值。"""
+    from readlens import enrich
+    from readlens.models import Book
+    f = enrich.get_fetcher("mock")
+    b = Book(book_id="e1", title="三体", author="刘慈欣", publisher="已有出版社")
+    filled = enrich.enrich_book(b, f)
+    assert "isbn" in filled and b.isbn == "9787536692930"
+    assert b.publisher == "已有出版社"      # 不覆盖已有
+    assert "publisher" not in filled
+    # 未知书目返回空、无改动
+    b2 = Book(book_id="e2", title="不存在的书", author="无名")
+    assert enrich.enrich_book(b2, f) == []
+
+
+def test_enrich_vault_integration(tmp_path):
+    """vault 增强后书籍 frontmatter 含补全的 isbn/pubdate。"""
+    from readlens import enrich
+    from readlens.vault import build_vault, VaultConfig
+    plat = _plat()
+    notes = [plat.book_notes(n.book.book_id) for n in plat.notebooks()]
+    enrich.enrich_notes(notes, enrich.get_fetcher("mock"))
+    out = str(tmp_path / "vault")
+    build_vault(notes, VaultConfig(out_dir=out))
+    santi = open(os.path.join(out, "01-书籍", "三体.md"), encoding="utf-8").read()
+    assert 'isbn: "9787536692930"' in santi and "pubdate: 2008" in santi
+
+
+def test_enrich_douban_degrades(monkeypatch):
+    """豆瓣源在网络/依赖异常时降级为返回空字典，绝不抛异常。"""
+    import requests
+    from readlens.enrich.douban import DoubanFetcher
+
+    def boom(*a, **k):
+        raise RuntimeError("network down")
+    monkeypatch.setattr(requests, "get", boom)
+    assert DoubanFetcher().fetch("三体") == {}
+
+
 def test_ai_offline():
     plat = _plat()
     engine = ai.get_engine(Config.load(None))

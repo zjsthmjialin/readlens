@@ -19,6 +19,8 @@ class Book:
     category: str = ""
     intro: str = ""
     publisher: str = ""
+    isbn: str = ""                           # ISBN（可由元数据增强补全）
+    pubdate: str = ""                        # 出版年/日期（可由元数据增强补全）
     rating: Optional[float] = None          # 0-100 归一化评分
     reading_count: Optional[int] = None     # 在读/读过人数
     finished: bool = False                   # 是否读完

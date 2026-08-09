@@ -41,6 +41,8 @@ def _load_manual_books(path):
             book_id=r.get("book_id") or f"manual_{i}",
             title=r.get("title", ""), author=r.get("author", ""),
             category=r.get("category", ""), publisher=r.get("publisher", ""),
+            cover=r.get("cover", ""), isbn=r.get("isbn", ""),
+            pubdate=r.get("pubdate", ""),
             intro=r.get("intro", ""), rating=r.get("platform_rating"),
             finished=r.get("status") == "已读",
             progress=r.get("progress", 0),
@@ -117,19 +119,78 @@ def cmd_vault(args):
     cfg, plat = _load(args)
     notes = [plat.book_notes(n.book.book_id) for n in plat.notebooks()]
     manual = _load_manual_books(args.manual)
+    if getattr(args, "enrich", False):
+        from . import enrich
+        fetcher = enrich.get_fetcher(args.enrich_source,
+                                     cache_path=".readlens_cache/douban.json")
+        s = enrich.enrich_notes(notes + manual, fetcher)
+        print(f"元数据增强（{args.enrich_source}）：补全 {s['books_touched']} 本书、"
+              f"{s['fields_filled']} 个字段")
     stat = None
     if not args.no_stat:
         try:
             stat = plat.read_stat(mode="overall")
         except Exception:
             stat = None
-    vc = VaultConfig(out_dir=args.out, vault_name=args.name)
+    vc = VaultConfig(out_dir=args.out, vault_name=args.name,
+                     incremental=not args.overwrite)
     counts = build_vault(notes, vc, stat=stat, manual_books=manual)
+    mode = "全量覆盖" if args.overwrite else "增量合并（保护手写内容/手填字段）"
+    print(f"更新模式：{mode}")
     print(f"知识库已生成到 {args.out}")
     print(f"  书籍 {counts['books']} · 作者 {counts['authors']} · "
           f"主题 {counts['topics']} · 仪表盘 {counts['dashboards']} · "
           f"其他 {counts['misc']}")
     print("用 Obsidian 打开该文件夹，并启用 Dataview 插件后打开「📖 首页」。")
+
+
+def cmd_quickstart(args):
+    """一键上手：用内置离线数据生成一个 demo 知识库，无需 Key。"""
+    cfg = Config.load(args.config)
+    cfg.data["platform"] = "mock"          # 强制离线示例数据
+    plat = get_platform(cfg)
+    notes = [plat.book_notes(n.book.book_id) for n in plat.notebooks()]
+    try:
+        stat = plat.read_stat(mode="overall")
+    except Exception:
+        stat = None
+    vc = VaultConfig(out_dir=args.out, vault_name=args.name, incremental=True)
+    counts = build_vault(notes, vc, stat=stat)
+    print("🎉 ReadLens 已用内置离线示例数据生成一个演示知识库！")
+    print(f"   位置：{args.out}")
+    print(f"   书籍 {counts['books']} · 作者 {counts['authors']} · "
+          f"主题 {counts['topics']} · 仪表盘 {counts['dashboards']}")
+    print("\n下一步：")
+    print(f"  1. 用 Obsidian「打开文件夹作为仓库」选择：{args.out}")
+    print("  2. 安装并启用社区插件 Dataview（可视化统计页需再开启 JavaScript Queries）")
+    print("  3. 打开「📖 首页.md」查看总览仪表盘")
+    print("\n想接入你自己的数据？")
+    print("  - 手动藏书：readlens vault --out ./MyVault --manual books.json")
+    print("  - 微信读书：cp config.example.yaml config.yaml 并设 WEREAD_API_KEY，")
+    print("    再 readlens vault --platform weread --out ./MyVault")
+    print("  更多命令见 readlens -h")
+
+
+def cmd_enrich(args):
+    """预览元数据增强会补全哪些字段（不落库）。"""
+    from . import enrich
+    _, plat = _load(args)
+    notes = [plat.book_notes(n.book.book_id) for n in plat.notebooks()]
+    notes += _load_manual_books(args.manual)
+    fetcher = enrich.get_fetcher(args.source, cache_path=".readlens_cache/douban.json")
+    total = 0
+    for n in notes:
+        b = n.book
+        filled = enrich.enrich_book(b, fetcher)
+        if filled:
+            total += len(filled)
+            info = "，".join(f"{k}={getattr(b, k)}" for k in filled)
+            print(f"《{b.title}》 补全：{info}")
+    if total == 0:
+        print("没有可补全的字段（可能已齐全，或该来源无匹配）。")
+    else:
+        print(f"\n共补全 {total} 个字段。加到 vault：readlens vault --enrich "
+              f"--enrich-source {args.source} --out ./MyVault")
 
 
 def cmd_ai(args):
@@ -148,10 +209,17 @@ def cmd_ai(args):
 
 
 def build_parser():
+    from . import __version__
     p = argparse.ArgumentParser(prog="readlens", description="ReadLens 阅读智能工具箱")
+    p.add_argument("--version", action="version", version=f"readlens {__version__}")
     p.add_argument("--config", default="config.yaml", help="配置文件路径")
     p.add_argument("--platform", choices=["mock", "weread"], help="覆盖平台适配器")
     sub = p.add_subparsers(dest="cmd", required=True)
+
+    s = sub.add_parser("quickstart", help="一键用内置离线数据生成演示知识库（无需 Key）")
+    s.add_argument("--out", default="./ReadLensDemo", help="演示知识库输出目录")
+    s.add_argument("--name", default="ReadLens 演示书库", help="知识库名称")
+    s.set_defaults(func=cmd_quickstart)
 
     s = sub.add_parser("search", help="搜索书籍")
     s.add_argument("keyword")
@@ -185,7 +253,18 @@ def build_parser():
     s.add_argument("--name", default="我的读书藏书库", help="知识库名称")
     s.add_argument("--manual", help="手动藏书 JSON 文件路径")
     s.add_argument("--no-stat", action="store_true", help="不生成统计快照")
+    s.add_argument("--overwrite", action="store_true",
+                   help="全量覆盖（默认增量合并，保护手写内容与手填字段）")
+    s.add_argument("--enrich", action="store_true",
+                   help="生成前用元数据源补全缺失的 isbn/cover/publisher/pubdate")
+    s.add_argument("--enrich-source", default="mock", choices=["mock", "douban"],
+                   help="元数据来源：mock(离线) | douban(在线, best-effort)")
     s.set_defaults(func=cmd_vault)
+
+    s = sub.add_parser("enrich", help="预览元数据增强会补全哪些字段（不落库）")
+    s.add_argument("--source", default="mock", choices=["mock", "douban"])
+    s.add_argument("--manual", help="手动藏书 JSON 文件路径")
+    s.set_defaults(func=cmd_enrich)
 
     s = sub.add_parser("ai", help="AI 分析")
     ai_sub = s.add_subparsers(dest="ai_cmd", required=True)

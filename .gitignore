@@ -10,8 +10,13 @@ __pycache__/
 .venv/
 venv/
 
+# 打包产物
+dist/
+build/
+
 # 生成产物
 export_output/
 report_output/
 MyReadingVault/
 examples/output/
+.readlens_cache/

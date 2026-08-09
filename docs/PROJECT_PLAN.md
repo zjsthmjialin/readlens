@@ -32,18 +32,23 @@
 
 ## 4. 路线图
 
+> 📋 **完整待做功能清单见 [`docs/FEATURES.md`](FEATURES.md)**（单一事实来源，含每项验收标准与优先级）。
+> 下面按 Phase 概览；勾选状态与 FEATURES.md 保持一致。
+
 ### Phase 1 · 打磨知识库（近期，优先）
-- [ ] 书籍笔记内嵌封面图（cover 字段落地为 Obsidian 图片/外链）
-- [ ] DataviewJS 可视化统计页：年度阅读热力图、分类占比、评分分布
-- [ ] 增量更新：重复运行 vault 时**合并**而非覆盖用户手写内容（保护 `## 主题笔记`、`## 关于` 等人写区块）
+- [x] 书籍笔记内嵌封面图（cover 落地为 `![封面|150](URL)` 外链图片）
+- [x] DataviewJS 可视化统计页：评分分布 / 分类占比 / 各年读完数量（`04-仪表盘/可视化统计.md`）
+- [x] 增量更新：重复运行 vault 时**合并**而非覆盖（标记注释包裹自动区；frontmatter 保护手填字段）。见 `vault/merge.py`。
 - [ ] 愿望清单 → 购书清单（owned=none 的书聚合，可标记优先级）
 
 ### Phase 2 · 数据更丰富
-- [ ] 豆瓣适配器：补全 ISBN、封面、出版信息（作为 `douban` 平台或元数据增强）
+- [x] 豆瓣元数据增强：`readlens/enrich/`（mock 离线 + douban 在线降级），补 ISBN/封面/出版信息
 - [ ] 微信读书写操作：`create_thought` / `add_to_shelf` 真实实现（接口已在 base 预留）
 - [ ] 阅读统计快照存档：每次导入落一份带日期的统计，支持趋势对比
 
 ### Phase 3 · 分发与自动化
+- [x] **pip 包分发**：`pip install readlens` + `readlens quickstart` 一键上手；
+      pyproject 元数据/入口点 + GitHub Actions CI 就绪（v0.2.0，定位「分发给别人用」）。
 - [ ] 打包成原项目那种 `npx skills add` 的 Skill 包形态
 - [ ] 定时任务：周期性导入 + 生成周报/月报，推送到知识库
 - [ ] 更多平台适配器：Kindle 标注、Readwise、微信收藏
@@ -58,8 +63,9 @@
 - 原项目的平台侧 Skill 文档（search/book/shelf/notes/readdata/review/discover）未随本项目 vendored；weread 适配器按其口径用代码实现。若需可把原始 `.md` 收进 `docs/weread-api/` 备查。
 - `weread` 适配器未经真实 Key 联调（无 Key 环境）；字段映射基于原项目文档，接入真实数据后需校验。
 - 离线 AI 引擎是抽取式占位，质量有限；接入 LLM 后显著提升。
-- vault 目前是全量生成/覆盖，用户在生成文件里手写的内容会被下次生成覆盖（见 Phase 1 增量更新）。
+- ~~vault 全量覆盖会丢手写内容~~ → 已在 v0.2.0 用增量合并解决（`--overwrite` 可强制全量）。
 
 ## 7. 版本
-- v0.1.0（当前）：五大能力 + 知识库，离线可跑。
-- v0.2.0（计划）：Phase 1 完成 = 知识库可日常使用、封面 + DataviewJS + 增量更新。
+- v0.1.0：五大能力 + 知识库，离线可跑。
+- v0.2.0（当前）：Phase 1 = 封面 + DataviewJS 可视化 + 增量更新；
+  并完成 pip 包分发（`readlens quickstart` 一键上手）+ CI。知识库可日常使用、可分发。

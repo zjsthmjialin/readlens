@@ -36,11 +36,15 @@ python -m readlens.cli vault --out ./MyReadingVault \
 | 能力说明（给 Agent 读） | `skills/*.md` |
 
 ## 4. 建议的下一步（按优先级，来自 PROJECT_PLAN Phase 1）
-1. **增量更新**：vault 重复生成时不要覆盖用户手写区块（`## 主题笔记`/`## 关于`/`## 简介`）。
-   做法建议：生成前读取旧文件，用标记注释（如 `<!-- readlens:auto:start -->`）包裹自动区，只替换自动区。
-2. **封面图**：把 `cover` URL 渲染进书籍笔记（Obsidian 支持外链图片 `![](url)`）。
-3. **DataviewJS 统计页**：年度热力图 / 评分分布 / 分类占比（需要在 vault 里生成一个 `dataviewjs` 代码块页）。
-4. **豆瓣元数据增强**：补 ISBN/封面/出版信息。
+已完成（v0.2.0，本次会话）：
+1. ✅ **增量更新**：`vault/merge.py` 用标记注释包裹自动区，只替换自动区；frontmatter
+   保护手填字段（rating/location/price/isbn/cover/owned 等）。默认开启，`--overwrite` 强制全量。
+2. ✅ **封面图**：`cover` 非空时书籍笔记渲染 `![封面|150](URL)`。
+3. ✅ **DataviewJS 统计页**：`04-仪表盘/可视化统计.md`（评分分布 / 分类占比 / 各年读完）。
+
+待做：见 **`docs/FEATURES.md`**（功能总表，单一事实来源，含验收标准与优先级）。
+建议首批：A1 PyPI 发布 → B1 购书清单 → A2 文档完善 → C1 豆瓣元数据增强。
+部署形态决策见 `docs/DEPLOYMENT.md`（已定：GitHub + pip 分发）。
 
 每项都遵循 `CLAUDE.md` 的开发顺序，并保持离线可跑 + 补测试。
 
