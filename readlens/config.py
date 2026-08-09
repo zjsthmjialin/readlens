@@ -46,6 +46,9 @@ class Config:
         # 环境变量覆盖
         if os.getenv("WEREAD_API_KEY"):
             data["weread"]["api_key"] = os.getenv("WEREAD_API_KEY")
+            # 便利：设了微信读书 Key 且未显式指定平台时，自动切到 weread
+            if data.get("platform", "mock") == "mock":
+                data["platform"] = "weread"
         if os.getenv("OPENAI_API_KEY"):
             data["ai"]["engine"] = "openai"
         if os.getenv("READLENS_LLM_MODEL"):
