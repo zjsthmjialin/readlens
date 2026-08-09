@@ -2,8 +2,10 @@
 
 本项目遵循 [语义化版本](https://semver.org/lang/zh-CN/)。格式参考 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)。
 
-## [0.5.1] - 2026-08-09
-### 新增（D1 定时自动化）
+## [0.5.2] - 2026-08-09
+### 新增（D1 定时自动化 · 首个完整发布）
+> 说明：0.5.0 / 0.5.1 因发布过程中的标签问题未完整上线，本 0.5.2 为 D1 的首个完整正式版。
+
 - **`readlens sync`**：一条命令完成「拉数据 → 增量更新知识库 → 生成周/月/年报写入 `07-报告/` → 落统计快照」，幂等可重复跑。
 - **周期报告摘要** `readlens/report/digest.py`：把 ReadStat 渲染成 Obsidian 原生 markdown 报告（时长/天数/对比/Top 书/偏好/AI 小结），同周期覆盖同一文件。
 - **`--report-mode` 支持多选**：`weekly monthly annually all none`，**默认一次生成周/月/年三份**（面向分发，兼顾不同用户习惯）。
